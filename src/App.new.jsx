@@ -18,14 +18,14 @@ const navItems = [
   { to: '/news', label: 'News' },
   { to: '/tabelle', label: 'Tabelle' },
   { to: '/anfahrt', label: 'Anfahrt' },
-  { to: '/ueber-uns', label: 'Über uns' },
+  { to: '/ueber-uns', label: '├£ber uns' },
 ]
 
 const formatDate = (value) => {
-  if (!value) return '–'
+  if (!value) return 'ÔÇô'
   if (value?.toDate) return value.toDate().toLocaleDateString('de-DE')
   const parsed = new Date(value)
-  return Number.isNaN(parsed.getTime()) ? '–' : parsed.toLocaleDateString('de-DE')
+  return Number.isNaN(parsed.getTime()) ? 'ÔÇô' : parsed.toLocaleDateString('de-DE')
 }
 
 const computeStandings = (matches) => {
@@ -115,8 +115,8 @@ const TopNav = () => {
           className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:border-emerald-300/60 hover:text-emerald-100 md:hidden"
           onClick={() => setOpen((v) => !v)}
         >
-          Menü
-          <span className="text-lg">{open ? '×' : '☰'}</span>
+          Men├╝
+          <span className="text-lg">{open ? '├ù' : 'Ôÿ░'}</span>
         </button>
 
         <nav
@@ -154,12 +154,12 @@ const HomePage = () => (
     <header className="mb-10 rounded-3xl border border-white/5 bg-slate-900/70 p-8 shadow-soft backdrop-blur">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-3">
-          <GradientBadge>Gut Schluck Hauset · Fussball</GradientBadge>
+          <GradientBadge>Gut Schluck Hauset ┬À Fussball</GradientBadge>
           <h1 className="font-display text-4xl font-semibold text-white sm:text-5xl">
             Ergebnisse melden. Tabelle aktualisieren. Modern & sicher.
           </h1>
           <p className="max-w-2xl text-lg text-slate-200/80">
-            Gut Schluck Hauset – Fußball mit Herz in Ostbelgien. Tradition, Gemeinschaft und ein klarer Blick nach
+            Gut Schluck Hauset ÔÇô Fu├ƒball mit Herz in Ostbelgien. Tradition, Gemeinschaft und ein klarer Blick nach
             vorn.
           </p>
           <div className="flex flex-wrap gap-3">
@@ -180,7 +180,7 @@ const HomePage = () => (
         <div className="relative">
           <div className="absolute -inset-6 rounded-full bg-gradient-to-br from-emerald-500/40 via-transparent to-orange-400/30 blur-2xl" />
           <div className="relative rounded-2xl border border-white/10 bg-slate-900/80 px-6 py-5 text-sm text-slate-200 shadow-soft">
-            <p className="text-xs uppercase tracking-[0.2em] text-emerald-200/70">Nächster Schritt</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-emerald-200/70">N├ñchster Schritt</p>
             <p className="mt-2 text-base font-semibold text-white">Firebase konfigurieren</p>
             <p className="mt-1 text-slate-300/80">
               Trage deine API-Daten in <code className="text-emerald-200">.env.local</code> ein und starte den Dev
@@ -194,19 +194,19 @@ const HomePage = () => (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <Card title="Unsere DNA" kicker="Verein">
         <p className="text-sm text-slate-200/90">
-          Mehr als ein Klub: Gut Schluck Hauset steht für Teamgeist, Nachwuchsförderung und packende Heimspiele. Wir
+          Mehr als ein Klub: Gut Schluck Hauset steht f├╝r Teamgeist, Nachwuchsf├Ârderung und packende Heimspiele. Wir
           investieren in Jugend, modernisieren Strukturen und bleiben immer nah an Fans und Dorf.
         </p>
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300/80">
           <span className="rounded-full bg-white/5 px-3 py-1">Heimspiele Samstag 18:00</span>
-          <span className="rounded-full bg-white/5 px-3 py-1">Jugend U11–U19</span>
+          <span className="rounded-full bg-white/5 px-3 py-1">Jugend U11ÔÇôU19</span>
           <span className="rounded-full bg-white/5 px-3 py-1">Emerald & Orange</span>
         </div>
       </Card>
 
       <Card title="Highlights" kicker="Momente">
         <div className="grid grid-cols-2 gap-3">
-          {['Heimjubel', 'Auswärtssieg', 'Jugendcamp', 'Derby'].map((label, idx) => (
+          {['Heimjubel', 'Ausw├ñrtssieg', 'Jugendcamp', 'Derby'].map((label, idx) => (
             <div
               key={label}
               className="relative h-28 overflow-hidden rounded-2xl border border-white/10 bg-slate-800"
@@ -228,9 +228,9 @@ const HomePage = () => (
 
       <Card title="Mitmachen" kicker="Community">
         <ul className="space-y-2 text-sm text-slate-200/90">
-          <li>• Schau beim Training vorbei und lerne das Team kennen.</li>
-          <li>• Unterstütze uns als Volunteer bei Heimspielen.</li>
-          <li>• Werde Mitglied – Kontakt über info@gsh-fussball.be.</li>
+          <li>ÔÇó Schau beim Training vorbei und lerne das Team kennen.</li>
+          <li>ÔÇó Unterst├╝tze uns als Volunteer bei Heimspielen.</li>
+          <li>ÔÇó Werde Mitglied ÔÇô Kontakt ├╝ber info@gsh-fussball.be.</li>
         </ul>
         <div className="mt-4 flex gap-2">
           <a
@@ -256,19 +256,19 @@ const newsItems = [
     title: 'Wintervorbereitung startet',
     date: '2025-01-10',
     tag: 'Club',
-    body: 'Trainingslager in Bütgenbach und Testspiele gegen FC Eupen und Union Kelmis.',
+    body: 'Trainingslager in B├╝tgenbach und Testspiele gegen FC Eupen und Union Kelmis.',
   },
   {
     title: 'Jugendcamp im Februar',
     date: '2025-02-02',
     tag: 'Jugend',
-    body: 'Drei Tage Technik, Spaß und Torabschluss mit unseren Coaches – jetzt anmelden.',
+    body: 'Drei Tage Technik, Spa├ƒ und Torabschluss mit unseren Coaches ÔÇô jetzt anmelden.',
   },
   {
     title: 'Neue Trikotsaison',
     date: '2025-03-01',
     tag: 'Team',
-    body: 'Frisches Design in Emerald & Orange – Präsentation beim Heimspielauftakt.',
+    body: 'Frisches Design in Emerald & Orange ÔÇô Pr├ñsentation beim Heimspielauftakt.',
   },
 ]
 
@@ -279,7 +279,7 @@ const NewsPage = () => (
     <header className="mb-8">
       <GradientBadge>News & Updates</GradientBadge>
       <h1 className="mt-3 font-display text-4xl font-semibold text-white">Aktuelles aus dem Verein</h1>
-      <p className="text-slate-300/80">Berichte, Ankündigungen und Stories rund um Gut Schluck Hauset.</p>
+      <p className="text-slate-300/80">Berichte, Ank├╝ndigungen und Stories rund um Gut Schluck Hauset.</p>
     </header>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       {newsItems.map((item) => (
@@ -301,7 +301,7 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
     <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
     <header className="mb-8">
       <GradientBadge>Ergebnisse & Tabelle</GradientBadge>
-      <h1 className="mt-3 font-display text-4xl font-semibold text-white">Spielstände und Ranking</h1>
+      <h1 className="mt-3 font-display text-4xl font-semibold text-white">Spielst├ñnde und Ranking</h1>
       <p className="text-slate-300/80">
         Trage neue Ergebnisse ein, sieh dir den Live-Feed an und checke die aktuelle Tabelle.
       </p>
@@ -324,7 +324,7 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
               </select>
             </label>
             <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-              Auswärtsteam
+              Ausw├ñrtsteam
               <select
                 value={form.awayTeam}
                 onChange={handleChange('awayTeam')}
@@ -350,7 +350,7 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
               />
             </label>
             <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-              Auswärts-Tore
+              Ausw├ñrts-Tore
               <input
                 type="number"
                 min="0"
@@ -384,7 +384,7 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
               disabled={saving}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? 'Speichern…' : 'Ergebnis speichern'}
+              {saving ? 'SpeichernÔÇª' : 'Ergebnis speichern'}
             </button>
             <p className="text-xs text-slate-300/80">
               Scores werden direkt in Firestore gespeichert und die Tabelle live aktualisiert.
@@ -420,10 +420,10 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
 
       <Card title="Admin / Sicherheit" kicker="Zugang">
         <ul className="space-y-3 text-sm text-slate-200/80">
-          <li>• Richte Firebase Auth ein (z.B. Email/Passwort) für geschützte Eingaben.</li>
-          <li>• Beschränke Firestore-Regeln: nur authentifizierte User dürfen schreiben.</li>
-          <li>• Optional: Rollen für Trainer:innen vs. Fans.</li>
-          <li>• Backups via Firestore Export oder Scheduled Cloud Function.</li>
+          <li>ÔÇó Richte Firebase Auth ein (z.B. Email/Passwort) f├╝r gesch├╝tzte Eingaben.</li>
+          <li>ÔÇó Beschr├ñnke Firestore-Regeln: nur authentifizierte User d├╝rfen schreiben.</li>
+          <li>ÔÇó Optional: Rollen f├╝r Trainer:innen vs. Fans.</li>
+          <li>ÔÇó Backups via Firestore Export oder Scheduled Cloud Function.</li>
         </ul>
       </Card>
     </div>
@@ -482,25 +482,25 @@ const AnfahrtPage = () => (
     <header className="mb-8">
       <GradientBadge>Anfahrt</GradientBadge>
       <h1 className="mt-3 font-display text-4xl font-semibold text-white">So findest du uns</h1>
-      <p className="text-slate-300/80">Adresse, Parken und Karte für den schnellsten Weg ins Stadion.</p>
+      <p className="text-slate-300/80">Adresse, Parken und Karte f├╝r den schnellsten Weg ins Stadion.</p>
     </header>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       <Card title="Adresse" kicker="Gut Schluck Hauset">
         <p className="text-sm text-slate-200/90">
           Sportplatz Gut Schluck Hauset
           <br />
-          Kirchstraße 97
+          Dorfstra├ƒe 12
           <br />
           4730 Raeren
         </p>
-        <p className="mt-3 text-xs text-slate-400">Parkplätze direkt am Platz · Buslinie 722 bis „Hauset Dorf“</p>
+        <p className="mt-3 text-xs text-slate-400">Parkpl├ñtze direkt am Platz ┬À Buslinie 722 bis ÔÇ×Hauset DorfÔÇ£</p>
         <a
           href="https://maps.google.com/?q=Kirchstra%C3%9Fe+97,+4730+Raeren"
           target="_blank"
           rel="noreferrer"
           className="mt-4 inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700"
         >
-          In Google Maps öffnen
+          In Google Maps ├Âffnen
         </a>
       </Card>
       <Card title="Karte" kicker="Lageplan">
@@ -526,41 +526,41 @@ const AboutPage = () => (
     <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
     <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-orange-400/15 via-transparent to-transparent blur-3xl" />
     <header className="mb-8">
-      <GradientBadge>Über uns</GradientBadge>
+      <GradientBadge>├£ber uns</GradientBadge>
       <h1 className="mt-3 font-display text-4xl font-semibold text-white">Tradition trifft Zukunft</h1>
       <p className="text-slate-300/80">
-        Wir sind der Fußballverein Gut Schluck Hauset – verwurzelt im Dorf, offen für Neues.
+        Wir sind der Fu├ƒballverein Gut Schluck Hauset ÔÇô verwurzelt im Dorf, offen f├╝r Neues.
       </p>
     </header>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       <Card title="Wer wir sind" kicker="Verein">
         <p className="text-sm text-slate-200/90">
-          Seit Jahren begeistert Gut Schluck Hauset mit ehrlichem Fußball, starker Jugendförderung und großartiger
-          Gemeinschaft. Wir leben Teamgeist – auf dem Platz und daneben.
+          Seit Jahren begeistert Gut Schluck Hauset mit ehrlichem Fu├ƒball, starker Jugendf├Ârderung und gro├ƒartiger
+          Gemeinschaft. Wir leben Teamgeist ÔÇô auf dem Platz und daneben.
         </p>
         <p className="mt-3 text-sm text-slate-200/90">
-          Mit modernen Tools halten wir Fans und Mitglieder immer aktuell. Komm vorbei, trainiere mit oder unterstütze
+          Mit modernen Tools halten wir Fans und Mitglieder immer aktuell. Komm vorbei, trainiere mit oder unterst├╝tze
           uns bei Heimspielen.
         </p>
       </Card>
       <Card title="Werte" kicker="Leitbild">
         <ul className="space-y-2 text-sm text-slate-200/90">
-          <li>• Respekt, Fairplay und Verantwortung.</li>
-          <li>• Nachwuchs stärken: Jugendteams und Trainer-Ausbildung.</li>
-          <li>• Transparenz: Ergebnisse, Tabelle und News immer live.</li>
-          <li>• Gemeinschaft: Feste, Camps und Aktionen für das Dorf.</li>
+          <li>ÔÇó Respekt, Fairplay und Verantwortung.</li>
+          <li>ÔÇó Nachwuchs st├ñrken: Jugendteams und Trainer-Ausbildung.</li>
+          <li>ÔÇó Transparenz: Ergebnisse, Tabelle und News immer live.</li>
+          <li>ÔÇó Gemeinschaft: Feste, Camps und Aktionen f├╝r das Dorf.</li>
         </ul>
       </Card>
     </div>
     <Card title="Kontakt" kicker="Mitmachen">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <p className="text-sm text-slate-200/90">Vorstand · info@gsh-fussball.be</p>
-          <p className="text-sm text-slate-200/90">Trainerteam · training@gsh-fussball.be</p>
+          <p className="text-sm text-slate-200/90">Vorstand ┬À info@gsh-fussball.be</p>
+          <p className="text-sm text-slate-200/90">Trainerteam ┬À training@gsh-fussball.be</p>
         </div>
         <div>
-          <p className="text-sm text-slate-200/90">Heimspiele · Samstag 18:00 · Kirchstraße 97</p>
-          <p className="text-sm text-slate-200/90">Folge uns · Instagram @gsh.fussball</p>
+          <p className="text-sm text-slate-200/90">Heimspiele ┬À Samstag 18:00 ┬À Dorfstra├ƒe 12</p>
+          <p className="text-sm text-slate-200/90">Folge uns ┬À Instagram @gsh.fussball</p>
         </div>
       </div>
     </Card>
@@ -590,7 +590,7 @@ const AppShell = () => {
       },
       (err) => {
         console.error(err)
-        setError('Konnte Daten nicht laden. Bitte prüfe die Firebase-Konfiguration.')
+        setError('Konnte Daten nicht laden. Bitte pr├╝fe die Firebase-Konfiguration.')
       },
     )
     return () => unsubscribe()
@@ -604,13 +604,13 @@ const AppShell = () => {
     event.preventDefault()
     setError('')
     if (form.homeTeam === form.awayTeam) {
-      setError('Heim- und Auswärtsteam müssen unterschiedlich sein.')
+      setError('Heim- und Ausw├ñrtsteam m├╝ssen unterschiedlich sein.')
       return
     }
     const hs = Number(form.homeScore)
     const as = Number(form.awayScore)
     if ([hs, as].some(Number.isNaN) || hs < 0 || as < 0) {
-      setError('Bitte gültige Tore eingeben (0 oder höher).')
+      setError('Bitte g├╝ltige Tore eingeben (0 oder h├Âher).')
       return
     }
     setSaving(true)
@@ -626,7 +626,7 @@ const AppShell = () => {
       setForm((prev) => ({ ...prev, homeScore: '', awayScore: '' }))
     } catch (err) {
       console.error(err)
-      setError('Speichern fehlgeschlagen. Bitte Konfiguration prüfen.')
+      setError('Speichern fehlgeschlagen. Bitte Konfiguration pr├╝fen.')
     } finally {
       setSaving(false)
     }
