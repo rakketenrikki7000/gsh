@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, NavLink, Link, useLocation } from 'react-router-dom'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  NavLink,
+  Link,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom'
 import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore'
-import { db } from './firebase'
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import { auth, db } from './firebase'
 
 const TEAM_OPTIONS = [
   'Gut Schluck Hauset',
@@ -93,9 +102,17 @@ const Card = ({ title, kicker, children, id }) => (
   </section>
 )
 
-const TopNav = () => {
+const TopNav = ({ user, onLogout }) => {
   const [open, setOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    // Close user dropdown on route change.
+    setMenuOpen(false)
+    setOpen(false)
+  }, [location.pathname])
 
   const linkBase =
     'rounded-full px-4 py-2 transition border md:border-transparent text-sm font-semibold'
@@ -140,6 +157,44 @@ const TopNav = () => {
               {item.label}
             </NavLink>
           ))}
+          <div className="flex flex-col gap-2 md:ml-3 md:flex-row md:items-center">
+            {user ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen((v) => !v)}
+                  className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20"
+                  aria-label="Profilmenü"
+                >
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-orange-400 text-sm font-bold text-slate-900">
+                    {(user.displayName || user.email || '?').slice(0, 1).toUpperCase()}
+                  </span>
+                </button>
+                {menuOpen ? (
+                  <div className="absolute right-0 mt-2 w-40 rounded-2xl border border-white/10 bg-slate-900/95 p-2 shadow-lg shadow-emerald-500/20">
+                    <button
+                      className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10"
+                      onClick={() => {
+                        onLogout?.()
+                        setMenuOpen(false)
+                        setOpen(false)
+                      }}
+                    >
+                      Abmelden
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5"
+                onClick={() => setOpen(false)}
+              >
+                Anmelden
+              </Link>
+            )}
+          </div>
         </nav>
       </div>
     </div>
@@ -567,6 +622,173 @@ const AboutPage = () => (
   </div>
 )
 
+const LoginPage = ({ user }) => {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
+
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      navigate('/')
+    } catch (err) {
+      console.error(err)
+      const code = err?.code || ''
+      const friendly =
+        code === 'auth/invalid-credential' || code === 'auth/wrong-password'
+          ? 'Email oder Passwort falsch.'
+          : code === 'auth/user-not-found'
+            ? 'Kein Nutzer mit dieser E-Mail gefunden.'
+            : code === 'auth/invalid-api-key' || code === 'auth/configuration-not-found'
+              ? 'Firebase-Konfiguration fehlt/ist falsch. Bitte .env.* prufen.'
+              : 'Login fehlgeschlagen. Bitte Zugangsdaten pruefen oder Auth in Firebase aktivieren.'
+      setError(friendly)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
+      <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
+      <div className="mx-auto max-w-xl space-y-6 rounded-3xl border border-white/5 bg-slate-900/70 p-8 shadow-soft backdrop-blur">
+        <div>
+          <GradientBadge>Login</GradientBadge>
+          <h1 className="mt-3 font-display text-3xl font-semibold text-white">Anmelden</h1>
+          <p className="text-slate-300/80">
+            Melde dich mit deiner E-Mail und deinem Passwort an. Stelle sicher, dass Email/Password Auth in Firebase
+            aktiviert ist.
+          </p>
+        </div>
+
+        {user ? (
+          <div className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-50">
+            Bereits angemeldet als <span className="font-semibold">{user.email}</span>.
+          </div>
+        ) : null}
+
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+            E-Mail
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+              required
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+            Passwort
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+              required
+            />
+          </label>
+
+          {error ? (
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+              {error}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? 'Anmeldung läuft…' : 'Anmelden'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+const SettingsPage = ({ user, onProfileSaved }) => {
+  const [displayName, setDisplayName] = useState(user?.displayName || '')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const handleSave = async (event) => {
+    event.preventDefault()
+    setError('')
+    setMessage('')
+    if (!user) {
+      setError('Bitte zuerst anmelden.')
+      return
+    }
+    setSaving(true)
+    try {
+      await user.reload()
+      await user.updateProfile({ displayName: displayName || null })
+      setMessage('Profil aktualisiert.')
+      onProfileSaved?.()
+    } catch (err) {
+      console.error(err)
+      setError('Konnte Profil nicht aktualisieren.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
+      <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-orange-400/15 via-transparent to-transparent blur-3xl" />
+      <div className="mx-auto max-w-xl space-y-6 rounded-3xl border border-white/5 bg-slate-900/70 p-8 shadow-soft backdrop-blur">
+        <div>
+          <GradientBadge>Profil</GradientBadge>
+          <h1 className="mt-3 font-display text-3xl font-semibold text-white">Einstellungen</h1>
+          <p className="text-slate-300/80">Passe deinen Anzeigenamen an.</p>
+        </div>
+
+        <form className="space-y-4" onSubmit={handleSave}>
+          <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+            Anzeigename
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+              placeholder="z.B. Dein Name"
+            />
+          </label>
+
+          {message ? (
+            <p className="rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-50">
+              {message}
+            </p>
+          ) : null}
+          {error ? (
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+              {error}
+            </p>
+          ) : null}
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {saving ? 'Speichern...' : 'Speichern'}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 const AppShell = () => {
   const [matches, setMatches] = useState([])
   const [form, setForm] = useState({
@@ -578,6 +800,7 @@ const AppShell = () => {
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [user, setUser] = useState(null)
   const standings = useMemo(() => computeStandings(matches), [matches])
 
   useEffect(() => {
@@ -593,6 +816,11 @@ const AppShell = () => {
         setError('Konnte Daten nicht laden. Bitte prüfe die Firebase-Konfiguration.')
       },
     )
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (nextUser) => setUser(nextUser))
     return () => unsubscribe()
   }, [])
 
@@ -632,6 +860,14 @@ const AppShell = () => {
     }
   }
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
       <div className="pointer-events-none fixed inset-0 -z-10">
@@ -639,7 +875,7 @@ const AppShell = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(15,118,110,0.25),transparent_25%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(249,115,22,0.2),transparent_25%)]" />
       </div>
-      <TopNav />
+      <TopNav user={user} onLogout={handleLogout} />
       <Routes>
         <Route
           path="/"
@@ -664,6 +900,7 @@ const AppShell = () => {
         <Route path="/news" element={<NewsPage />} />
         <Route path="/anfahrt" element={<AnfahrtPage />} />
         <Route path="/ueber-uns" element={<AboutPage />} />
+        <Route path="/login" element={<LoginPage user={user} />} />
       </Routes>
     </div>
   )
