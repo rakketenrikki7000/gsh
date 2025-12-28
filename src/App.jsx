@@ -15,12 +15,13 @@ import { auth, db } from './firebase'
 
 const TEAM_OPTIONS = [
   'Gut Schluck Hauset',
-  'FC Eupen',
-  'Union Kelmis',
-  'Raeren',
-  'Lontzen',
-  'Walhorn',
-  'Gastteam',
+  'Tornado',
+  'Weserkicker',
+  'Raeren Berg',
+  'Herbestha',
+  'Inferno',
+  'Werth',
+  'Walk',
 ]
 
 const PUBLIC_NAV_ITEMS = [
@@ -377,8 +378,24 @@ const NewsPage = () => (
   </div>
 )
 
-const TablePage = ({ matches, standings, form, handleChange, handleSubmit, saving, error, isAdmin }) => (
-  <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
+const TablePage = ({ matches, standings, form, handleChange, handleSubmit, saving, error, isAdmin }) => {
+  const toTime = (value) => {
+    if (!value) return 0
+    if (value?.toDate) return value.toDate().getTime()
+    const parsed = new Date(value).getTime()
+    return Number.isNaN(parsed) ? 0 : parsed
+  }
+
+  const latestMatches = useMemo(
+    () =>
+      [...matches]
+        .sort((a, b) => (toTime(b.date || b.createdAt) ?? 0) - (toTime(a.date || a.createdAt) ?? 0))
+        .slice(0, 4),
+    [matches],
+  )
+
+  return (
+    <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
     <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
     <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
     <header className="mb-8">
@@ -407,7 +424,7 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
                 </select>
               </label>
               <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                Auswaertsteam
+                Auswärtsteam
                 <select
                   value={form.awayTeam}
                   onChange={handleChange('awayTeam')}
@@ -469,9 +486,6 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
               >
                 {saving ? 'Speichern…' : 'Ergebnis speichern'}
               </button>
-              <p className="text-xs text-slate-300/80">
-                Scores werden direkt in Firestore gespeichert und die Tabelle live aktualisiert.
-              </p>
             </div>
           </form>
         </Card>
@@ -479,10 +493,10 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
 
       <Card title="Letzte Ergebnisse" kicker="Live Feed" id="results">
         <div className="space-y-3">
-          {matches.length === 0 ? (
+          {latestMatches.length === 0 ? (
             <p className="text-sm text-slate-300/70">Noch keine Spiele gespeichert.</p>
           ) : (
-            matches.slice(0, 6).map((match) => (
+            latestMatches.map((match) => (
               <div
                 key={match.id}
                 className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/5 px-4 py-3"
@@ -548,8 +562,9 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
         </table>
       </div>
     </Card>
-  </div>
-)
+    </div>
+  )
+}
 
 const AnfahrtPage = () => (
   <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
@@ -950,8 +965,8 @@ const SettingsPage = ({ user, onProfileSaved }) => {
 const AppShell = () => {
   const [matches, setMatches] = useState([])
   const [form, setForm] = useState({
-    homeTeam: 'Gut Schluck Hauset',
-    awayTeam: 'Gastteam',
+    homeTeam: '',
+    awayTeam: '',
     homeScore: '',
     awayScore: '',
     date: new Date().toISOString().slice(0, 10),
@@ -996,7 +1011,7 @@ const AppShell = () => {
     event.preventDefault()
     setError('')
     if (form.homeTeam === form.awayTeam) {
-      setError('Heim- und Auswaertsteam muessen unterschiedlich sein.')
+      setError('Heim- und Auswärtsteam muessen unterschiedlich sein.')
       return
     }
     const hs = Number(form.homeScore)
