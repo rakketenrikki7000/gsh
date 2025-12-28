@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app'
+import { getApp, getApps, initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
@@ -27,7 +27,7 @@ const safeConfig = Object.fromEntries(
   Object.entries(firebaseConfig).map(([key, value]) => [key, value || `MISSING_${key}`]),
 ) as typeof firebaseConfig
 
-const app = initializeApp(safeConfig)
+const app = getApps().length ? getApp() : initializeApp(safeConfig)
 
 export const auth = getAuth(app)
 export const db = getFirestore(app)
