@@ -56,7 +56,7 @@ const formatDate = (value) => {
   return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleDateString('de-DE')
 }
 
-const computeStandings = (matches) => {
+const computeStandings = (matches, mode = 'all') => {
   const table = {}
   matches.forEach((match) => {
     const { homeTeam, awayTeam, homeScore, awayScore } = match
@@ -64,30 +64,41 @@ const computeStandings = (matches) => {
     const hs = Number(homeScore)
     const as = Number(awayScore)
     if (Number.isNaN(hs) || Number.isNaN(as)) return
-    const ensure = (team) => {
-      table[team] ??= { team, played: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0, points: 0 }
+    const includeHome = mode !== 'away'
+    const includeAway = mode !== 'home'
+    const ensure = (team) =>
+      (table[team] ??= { team, played: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0, points: 0 })
+
+    if (includeHome) {
+      ensure(homeTeam)
+      table[homeTeam].played += 1
+      table[homeTeam].gf += hs
+      table[homeTeam].ga += as
+      if (hs > as) {
+        table[homeTeam].wins += 1
+        table[homeTeam].points += 3
+      } else if (hs < as) {
+        table[homeTeam].losses += 1
+      } else {
+        table[homeTeam].draws += 1
+        table[homeTeam].points += 1
+      }
     }
-    ensure(homeTeam)
-    ensure(awayTeam)
-    table[homeTeam].played += 1
-    table[awayTeam].played += 1
-    table[homeTeam].gf += hs
-    table[homeTeam].ga += as
-    table[awayTeam].gf += as
-    table[awayTeam].ga += hs
-    if (hs > as) {
-      table[homeTeam].wins += 1
-      table[awayTeam].losses += 1
-      table[homeTeam].points += 3
-    } else if (hs < as) {
-      table[awayTeam].wins += 1
-      table[homeTeam].losses += 1
-      table[awayTeam].points += 3
-    } else {
-      table[homeTeam].draws += 1
-      table[awayTeam].draws += 1
-      table[homeTeam].points += 1
-      table[awayTeam].points += 1
+
+    if (includeAway) {
+      ensure(awayTeam)
+      table[awayTeam].played += 1
+      table[awayTeam].gf += as
+      table[awayTeam].ga += hs
+      if (as > hs) {
+        table[awayTeam].wins += 1
+        table[awayTeam].points += 3
+      } else if (as < hs) {
+        table[awayTeam].losses += 1
+      } else {
+        table[awayTeam].draws += 1
+        table[awayTeam].points += 1
+      }
     }
   })
   return Object.values(table).sort((a, b) => {
@@ -125,6 +136,44 @@ const Card = ({ title, kicker, children, id, className = '' }) => (
     {children}
   </section>
 )
+
+const PlayerCard = ({ player }) => {
+  const initials = (player.name || '')
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+  return (
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-lg shadow-emerald-500/10">
+      <div className="relative h-36 bg-gradient-to-b from-indigo-500/30 via-slate-800 to-slate-900">
+        {player.photo ? (
+          <img
+            src={player.photo}
+            alt={player.name}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-emerald-100">
+            {initials || '?'}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center justify-between px-3 pt-3">
+        <p className="text-sm font-semibold leading-tight text-white">{player.name || 'Unbekannt'}</p>
+        {player.number ? (
+          <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-bold text-emerald-200">#{player.number}</span>
+        ) : (
+          <span className="rounded-full bg-white/10 px-2 py-1 text-xs font-bold text-emerald-200">Staff</span>
+        )}
+      </div>
+      <div className="px-3 pb-3 text-xs text-slate-400">
+        <span className="rounded-full bg-white/5 px-2 py-1 text-emerald-200/80">Profil</span>
+      </div>
+    </div>
+  )
+}
 
 const TopNav = ({ user, onLogout, navItems }) => {
   const [open, setOpen] = useState(false)
@@ -386,6 +435,14 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
     return Number.isNaN(parsed) ? 0 : parsed
   }
 
+  const [rankingFilter, setRankingFilter] = useState('all')
+  const [notes, setNotes] = useState([])
+  const [notesError, setNotesError] = useState('')
+  const [loadingNotes, setLoadingNotes] = useState(true)
+  const [noteForm, setNoteForm] = useState({ body: '' })
+  const [savingNote, setSavingNote] = useState(false)
+  const [noteExpanded, setNoteExpanded] = useState(false)
+
   const latestMatches = useMemo(
     () =>
       [...matches]
@@ -393,6 +450,53 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
         .slice(0, 4),
     [matches],
   )
+
+  const standingsView = useMemo(() => computeStandings(matches, rankingFilter), [matches, rankingFilter])
+
+  const handleNoteChange = (event) => {
+    setNoteForm({ body: event.target.value })
+  }
+
+  const handleNoteSubmit = async (event) => {
+    event.preventDefault()
+    setNotesError('')
+    if (!noteForm.body.trim()) {
+      setNotesError('Bitte einen Text eingeben.')
+      return
+    }
+    setSavingNote(true)
+    try {
+      await addDoc(collection(db, 'notes'), {
+        body: noteForm.body,
+        createdAt: serverTimestamp(),
+      })
+      setNoteForm({ body: '' })
+    } catch (err) {
+      console.error(err)
+      setNotesError('Konnte Notiz nicht speichern.')
+    } finally {
+      setSavingNote(false)
+    }
+  }
+
+  useEffect(() => {
+    const q = query(collection(db, 'notes'), orderBy('createdAt', 'desc'))
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const next = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        setNotes(next)
+        setNoteExpanded(false)
+        setLoadingNotes(false)
+      },
+      (err) => {
+        console.error(err)
+        setNotesError('Konnte Anmerkung nicht laden.')
+        setLoadingNotes(false)
+      },
+    )
+    return () => unsubscribe()
+  }, [])
 
   return (
     <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
@@ -402,7 +506,7 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
       <GradientBadge>Ergebnisse & Tabelle</GradientBadge>
       <h1 className="mt-3 font-display text-4xl font-semibold text-white">Spielstände und Ranking</h1>
       <p className="text-slate-300/80">
-        Trage neue Ergebnisse ein, sieh dir den Live-Feed an und checke die aktuelle Tabelle.
+        Checke die aktuelle Tabelle und sieh dir den Live-Feed an
       </p>
     </header>
 
@@ -496,29 +600,126 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
           {latestMatches.length === 0 ? (
             <p className="text-sm text-slate-300/70">Noch keine Spiele gespeichert.</p>
           ) : (
-            latestMatches.map((match) => (
-              <div
-                key={match.id}
-                className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/5 px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    {match.homeTeam} <span className="text-emerald-200">vs</span> {match.awayTeam}
-                  </p>
-                  <p className="text-xs text-slate-300/70">{formatDate(match.date)}</p>
+            latestMatches.map((match) => {
+              const isGsh = match.homeTeam === 'Gut Schluck Hauset' || match.awayTeam === 'Gut Schluck Hauset'
+              return (
+                <div
+                  key={match.id}
+                  className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${
+                    isGsh
+                      ? 'border-emerald-400/50 bg-emerald-500/10 shadow-lg shadow-emerald-500/20'
+                      : 'border-white/5 bg-white/5'
+                  }`}
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      {match.homeTeam} <span className="text-emerald-200">vs</span> {match.awayTeam}
+                    </p>
+                    <p className="text-xs text-slate-300/70">{formatDate(match.date)}</p>
+                  </div>
+                  <div
+                    className={`rounded-full px-3 py-1 text-sm font-semibold ${
+                      isGsh ? 'bg-emerald-500/20 text-emerald-50' : 'bg-slate-900/80 text-emerald-100'
+                    }`}
+                  >
+                    {match.homeScore} : {match.awayScore}
+                  </div>
                 </div>
-                <div className="rounded-full bg-slate-900/80 px-3 py-1 text-sm font-semibold text-emerald-100">
-                  {match.homeScore} : {match.awayScore}
-                </div>
-              </div>
-            ))
+              )
+            })
           )}
+        </div>
+      </Card>
+
+      <Card title="Traineranmerkung" kicker="GSH" id="notes">
+        <div className="space-y-4">
+          {isAdmin ? (
+            <form className="space-y-3" onSubmit={handleNoteSubmit}>
+              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                Anmerkung
+                <textarea
+                  value={noteForm.body}
+                  onChange={handleNoteChange}
+                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                  rows="3"
+                  placeholder="Kurz anmerken..."
+                />
+              </label>
+              {notesError ? (
+                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+                  {notesError}
+                </p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={savingNote}
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {savingNote ? 'Speichert...' : 'Anmerkung speichern'}
+              </button>
+            </form>
+          ) : null}
+
+          <div className="space-y-3">
+            {loadingNotes ? (
+              <p className="text-sm text-slate-300/70">Lade Notizen...</p>
+            ) : notesError ? (
+              <p className="text-sm text-red-200/90">{notesError}</p>
+            ) : notes.length === 0 ? (
+              <p className="text-sm text-slate-300/70">Noch keine Notizen vorhanden.</p>
+            ) : (
+              (() => {
+                const note = notes[0]
+                const noteText = note.body || note.text || ''
+                const wordList = noteText.trim() ? noteText.trim().split(/\s+/) : []
+                const isLong = wordList.length > 150
+                const displayText =
+                  isLong && !noteExpanded ? `${wordList.slice(0, 150).join(' ')} ...` : noteText
+                return (
+                  <div key={note.id} className="rounded-2xl border border-white/5 bg-white/5 p-3">
+                    <p className="text-sm text-slate-200/90">{displayText}</p>
+                    <p className="mt-1 text-[11px] text-slate-300/70">{formatDate(note.createdAt)}</p>
+                    {isLong ? (
+                      <button
+                        type="button"
+                        onClick={() => setNoteExpanded((v) => !v)}
+                        className="mt-2 text-xs font-semibold text-emerald-200 hover:text-emerald-100"
+                      >
+                        {noteExpanded ? 'Weniger anzeigen' : 'Mehr öffnen'}
+                      </button>
+                    ) : null}
+                  </div>
+                )
+              })()
+            )}
+          </div>
         </div>
       </Card>
 
       </div>
 
-    <Card title="Tabelle" kicker="Live Ranking" id="standings" className="mt-12">
+    <Card title="Tabelle 2025" kicker="Live Ranking" id="standings" className="mt-12">
+      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+        {[
+          { value: 'all', label: 'All' },
+          { value: 'home', label: 'Home' },
+          { value: 'away', label: 'Away' },
+        ].map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setRankingFilter(opt.value)}
+            className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+              rankingFilter === opt.value
+                ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-50 shadow shadow-emerald-500/30'
+                : 'border-white/10 bg-white/5 text-slate-200 hover:border-emerald-300/50 hover:text-emerald-50'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-left">
           <thead>
@@ -535,14 +736,14 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
             </tr>
           </thead>
           <tbody className="text-sm">
-            {standings.length === 0 ? (
+            {standingsView.length === 0 ? (
               <tr>
                 <td colSpan="9" className="py-4 text-center text-slate-300/70">
                   Noch keine Daten. Erfasse das erste Ergebnis.
                 </td>
               </tr>
             ) : (
-              standings.map((row, idx) => (
+              standingsView.map((row, idx) => (
                 <tr key={row.team} className="border-t border-white/5 hover:bg-white/5">
                   <td className="py-3 pr-3 text-slate-400">{idx + 1}</td>
                   <td className="py-3 pr-3 font-semibold text-white">{row.team}</td>
@@ -573,7 +774,7 @@ const AnfahrtPage = () => (
     <header className="mb-8">
       <GradientBadge>Anfahrt</GradientBadge>
       <h1 className="mt-3 font-display text-4xl font-semibold text-white">So findest du uns</h1>
-      <p className="text-slate-300/80">Adresse, Parken und Karte fuer den schnellsten Weg zum GSH.</p>
+      <p className="text-slate-300/80">Adresse, Parken und Karte für den schnellsten Weg zum GSH.</p>
     </header>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Card title="Adresse" kicker="Gut Schluck Hauset Sportplatz">
@@ -584,7 +785,7 @@ const AnfahrtPage = () => (
               <br />
               4730 Raeren
             </p>
-            <p className="text-xs text-slate-400">Parkplaetze direkt vor dem Platz - Buslinie 722 bis "Hauset Dorf"</p>
+            <p className="text-xs text-slate-400">Parkplätze direkt vor dem Platz - Buslinie 722 bis "Hauset Dorf"</p>
             <a
               href="https://maps.google.com/?q=Kirchstra%C3%9Fe+97,+4730+Raeren"
               target="_blank"
@@ -728,7 +929,7 @@ const TeamPage = () => (
     </header>
     <Card title="Hinweis" kicker="Intern">
       <p className="text-sm text-slate-200/90">
-        Dieser Bereich ist nur fuer angemeldete Nutzer sichtbar. Lege hier spaeter Kader, Positionen oder Trainingsplaene an.
+        Dieser Bereich ist nur fuer angemeldete Nutzer sichtbar. Lege hier später Kader, Positionen oder Trainingspläne an.
       </p>
     </Card>
   </div>
@@ -747,7 +948,7 @@ const PublicTablePage = ({ standings }) => (
         Ergebnisse und Tabelle für alle Fans und Mitglieder
       </p>
     </header>
-    <Card title="Tabelle" kicker="Live Ranking">
+    <Card title="Tabelle 2025" kicker="Live Ranking">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-left">
           <thead>
@@ -879,7 +1080,7 @@ const LoginPage = ({ user }) => {
             disabled={loading}
             className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? 'Anmeldung laeuft...' : 'Anmelden'}
+            {loading ? 'Anmeldung läuft...' : 'Anmelden'}
           </button>
         </form>
       </div>
@@ -965,8 +1166,8 @@ const SettingsPage = ({ user, onProfileSaved }) => {
 const AppShell = () => {
   const [matches, setMatches] = useState([])
   const [form, setForm] = useState({
-    homeTeam: '',
-    awayTeam: '',
+    homeTeam: 'Gut Schluck Hauset',
+    awayTeam: 'Gut Schluck Hauset',
     homeScore: '',
     awayScore: '',
     date: new Date().toISOString().slice(0, 10),
