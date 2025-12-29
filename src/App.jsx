@@ -1201,65 +1201,90 @@ const TeamPage = ({ isAdmin }) => {
   )
 }
 
-const PublicTablePage = ({ standings }) => (
-  <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
-    <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
-    <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
-    <header className="mb-8">
-      <GradientBadge>Spielstand</GradientBadge>
-      <h1 className="mt-3 font-display text-4xl font-semibold text-white">Tabelle</h1>
-      <p className="text-slate-300/80">
-        Season 2025 - Gut Schluck Hauset Fussball
-        <br />
-        Ergebnisse und Tabelle für alle Fans und Mitglieder
-      </p>
-    </header>
-    <Card title="Tabelle 2025" kicker="Live Ranking">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-left">
-          <thead>
-            <tr className="text-xs uppercase tracking-[0.2em] text-slate-300/70">
-              <th className="py-2 pr-3 font-medium">#</th>
-              <th className="py-2 pr-3 font-medium">Team</th>
-              <th className="py-2 pr-3 font-medium">Sp</th>
-              <th className="py-2 pr-3 font-medium">S</th>
-              <th className="py-2 pr-3 font-medium">U</th>
-              <th className="py-2 pr-3 font-medium">N</th>
-              <th className="py-2 pr-3 font-medium">Tore</th>
-              <th className="py-2 pr-3 font-medium">Diff</th>
-              <th className="py-2 pr-3 font-medium text-right">Pkt</th>
-            </tr>
-          </thead>
-          <tbody className="text-sm">
-            {standings.length === 0 ? (
-              <tr>
-                <td colSpan="9" className="py-4 text-center text-slate-300/70">
-                  Noch keine Daten. Erfasse das erste Ergebnis im privaten Bereich.
-                </td>
+const PublicTablePage = ({ standings, matches }) => {
+  const [publicFilter, setPublicFilter] = useState('all')
+  const standingsView = useMemo(() => computeStandings(matches, publicFilter), [matches, publicFilter])
+
+  return (
+    <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
+      <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
+      <header className="mb-8">
+        <GradientBadge>Spielstand</GradientBadge>
+        <h1 className="mt-3 font-display text-4xl font-semibold text-white">Tabelle</h1>
+        <p className="text-slate-300/80">
+          Season 2025 - Gut Schluck Hauset Fussball
+          <br />
+          Ergebnisse und Tabelle für alle Fans und Mitglieder
+        </p>
+      </header>
+      <Card title="Tabelle 2025" kicker="Live Ranking">
+        <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+          {[
+            { value: 'all', label: 'All' },
+            { value: 'home', label: 'Home' },
+            { value: 'away', label: 'Away' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setPublicFilter(opt.value)}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                publicFilter === opt.value
+                  ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-50 shadow shadow-emerald-500/30'
+                  : 'border-white/10 bg-white/5 text-slate-200 hover:border-emerald-300/50 hover:text-emerald-50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-left">
+            <thead>
+              <tr className="text-xs uppercase tracking-[0.2em] text-slate-300/70">
+                <th className="py-2 pr-3 font-medium">#</th>
+                <th className="py-2 pr-3 font-medium">Team</th>
+                <th className="py-2 pr-3 font-medium">Sp</th>
+                <th className="py-2 pr-3 font-medium">S</th>
+                <th className="py-2 pr-3 font-medium">U</th>
+                <th className="py-2 pr-3 font-medium">N</th>
+                <th className="py-2 pr-3 font-medium">Tore</th>
+                <th className="py-2 pr-3 font-medium">Diff</th>
+                <th className="py-2 pr-3 font-medium text-right">Pkt</th>
               </tr>
-            ) : (
-              standings.map((row, idx) => (
-                <tr key={row.team} className="border-t border-white/5 hover:bg-white/5">
-                  <td className="py-3 pr-3 text-slate-400">{idx + 1}</td>
-                  <td className="py-3 pr-3 font-semibold text-white">{row.team}</td>
-                  <td className="py-3 pr-3">{row.played}</td>
-                  <td className="py-3 pr-3">{row.wins}</td>
-                  <td className="py-3 pr-3">{row.draws}</td>
-                  <td className="py-3 pr-3">{row.losses}</td>
-                  <td className="py-3 pr-3">
-                    {row.gf}:{row.ga}
+            </thead>
+            <tbody className="text-sm">
+              {standingsView.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="py-4 text-center text-slate-300/70">
+                    Noch keine Daten. Erfasse das erste Ergebnis im privaten Bereich.
                   </td>
-                  <td className="py-3 pr-3">{row.gf - row.ga}</td>
-                  <td className="py-3 pr-3 text-right font-semibold text-emerald-200">{row.points}</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  </div>
-)
+              ) : (
+                standingsView.map((row, idx) => (
+                  <tr key={row.team} className="border-t border-white/5 hover:bg-white/5">
+                    <td className="py-3 pr-3 text-slate-400">{idx + 1}</td>
+                    <td className="py-3 pr-3 font-semibold text-white">{row.team}</td>
+                    <td className="py-3 pr-3">{row.played}</td>
+                    <td className="py-3 pr-3">{row.wins}</td>
+                    <td className="py-3 pr-3">{row.draws}</td>
+                    <td className="py-3 pr-3">{row.losses}</td>
+                    <td className="py-3 pr-3">
+                      {row.gf}:{row.ga}
+                    </td>
+                    <td className="py-3 pr-3">{row.gf - row.ga}</td>
+                    <td className="py-3 pr-3 text-right font-semibold text-emerald-200">{row.points}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  )
+}
 
 const LoginPage = ({ user }) => {
   const [email, setEmail] = useState('')
@@ -1527,7 +1552,7 @@ const AppShell = () => {
           path="/"
           element={<HomePage />}
         />
-        <Route path="/tabelle-oeffentlich" element={<PublicTablePage standings={standings} />} />
+        <Route path="/tabelle-oeffentlich" element={<PublicTablePage standings={standings} matches={matches} />} />
         <Route path="/galerie" element={<GalleryPage />} />
         <Route
           path="/tabelle"
