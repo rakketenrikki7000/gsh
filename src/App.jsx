@@ -32,6 +32,16 @@ const POSITION_GROUPS = [
   { key: 'staff', label: 'Trainerstab' },
 ]
 
+const SPONSOR_LOGOS = [
+  { src: '/Dienstleistungen_Stefan_Siffrin.jpg', alt: 'Dienstleistungen Stefan Siffrin', href: 'https://be.linkedin.com/in/stefan-siffrin-552864158' },
+  { src: '/jkmotor-raeder.jpg', alt: 'JK Motor Raeder', href: 'https://www.jkmotorraeder.be/' },
+  { src: '/Elektro_Bemelmans.png', alt: 'Elektro Bemelmans', href: 'https://elektro-bemelmans.be/' },
+  { src: '/Metzgerei_Vincent.jpg', alt: 'Metzgerei Vincent', href: 'https://www.facebook.com/people/Metzgerei-boucherie-Dorthu-Steyns/100054569703802/'},
+  { src: '/Mauel.png', alt: 'Mauel', href: 'https://www.mauel.be/'},
+  { src: '/Ralph_Creutz.jpg', alt: 'Ralph Creutz', href: 'https://www.creutz-ralph.be/'},
+]
+const SPONSOR_LOOP = [...SPONSOR_LOGOS, ...SPONSOR_LOGOS, ...SPONSOR_LOGOS, ...SPONSOR_LOGOS]
+
 const PUBLIC_NAV_ITEMS = [
   { to: '/', label: 'Start' },
   { to: '/news', label: 'News' },
@@ -143,6 +153,47 @@ const Card = ({ title, kicker, children, id, className = '' }) => (
     </div>
     {children}
   </section>
+)
+
+const SponsorMarquee = () => (
+  <div className="mt-8">
+    <div className="relative overflow-hidden rounded-xl bg-slate-950/60 px-6">
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-slate-950 via-slate-950/70 to-transparent" />
+      <div className="flex min-w-[200%] flex-nowrap items-center gap-6 py-4 sponsor-marquee-track">
+        {SPONSOR_LOOP.map((logo, idx) => (
+          logo.href ? (
+            <a
+              key={`${logo.alt}-${idx}`}
+              href={logo.href}
+              target="_blank"
+              rel="noreferrer"
+              className="flex h-16 w-44 items-center justify-center rounded-xl bg-white/5 px-4 py-2 shadow-inner transition hover:-translate-y-0.5 hover:scale-[1.06] hover:bg-white/15 hover:shadow-[0_0_28px_rgba(16,185,129,0.45)] hover:border hover:border-emerald-400/60"
+            >
+              <img
+                src={logo.src}
+                alt={logo.alt}
+                className="max-h-12 w-full object-contain brightness-110 contrast-110"
+                loading="lazy"
+              />
+            </a>
+          ) : (
+            <div
+              key={`${logo.alt}-${idx}`}
+              className="flex h-16 w-44 items-center justify-center rounded-xl bg-white/5 px-4 py-2 shadow-inner transition hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(16,185,129,0.35)] hover:border hover:border-emerald-400/40"
+            >
+              <img
+                src={logo.src}
+                alt={logo.alt}
+                className="max-h-12 w-full object-contain brightness-110 contrast-110"
+                loading="lazy"
+              />
+            </div>
+          )
+        ))}
+      </div>
+    </div>
+  </div>
 )
 
 const PlayerCard = ({ player }) => {
@@ -322,6 +373,8 @@ const HomePage = () => (
         </div>
       </div>
     </header>
+
+    <SponsorMarquee />
 
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <Card title="Unsere DNA" kicker="Verein">

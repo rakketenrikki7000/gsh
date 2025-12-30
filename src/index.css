@@ -19,3 +19,18 @@ body {
 * {
   box-sizing: border-box;
 }
+
+.sponsor-marquee-track {
+  display: inline-flex;
+  animation: sponsor-scroll 24s linear infinite;
+  will-change: transform;
+}
+
+@keyframes sponsor-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-33.333%);
+  }
+}
