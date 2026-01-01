@@ -1135,11 +1135,11 @@ const GalleryPage = ({ isAdmin }) => {
 
   const handleDeleteEvent = async () => {
     if (!isAdmin) {
-      setEventError('Nur Admins koennen Events loeschen.')
+      setEventError('Nur Admins koennen Events löschen.')
       return
     }
     if (!selectedEventId) return
-    const confirmDelete = window.confirm('Event und alle zugehoerigen Bilder loeschen?')
+    const confirmDelete = window.confirm('Event und alle zugehoerigen Bilder löschen?')
     if (!confirmDelete) return
     setDeletingEvent(true)
     try {
@@ -1158,7 +1158,7 @@ const GalleryPage = ({ isAdmin }) => {
 
   const handleDeleteImage = async (imageId) => {
     if (!isAdmin) {
-      setUploadError('Nur Admins koennen Bilder loeschen.')
+      setUploadError('Nur Admins koennen Bilder löschen.')
       return
     }
     if (!selectedEventId || !imageId) return
@@ -1318,7 +1318,7 @@ const GalleryPage = ({ isAdmin }) => {
                     disabled={deletingEvent}
                     className="rounded-full border border-red-400/60 px-3 py-1 text-xs font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-60"
                   >
-                    {deletingEvent ? 'Loescht...' : 'Event loeschen'}
+                    {deletingEvent ? 'Loescht...' : 'Event löschen'}
                   </button>
                 </>
               ) : null}
@@ -1358,7 +1358,7 @@ const GalleryPage = ({ isAdmin }) => {
                           disabled={deletingImageId === img.id}
                           className="absolute right-3 top-3 rounded-full border border-white/20 bg-slate-900/70 px-2 py-1 text-[10px] font-semibold text-white shadow hover:border-red-400/60 hover:text-red-200 disabled:opacity-60"
                         >
-                          {deletingImageId === img.id ? '...' : 'Loeschen'}
+                          {deletingImageId === img.id ? '...' : 'Löschen'}
                         </button>
                       ) : null}
                     </div>
@@ -1389,6 +1389,7 @@ const TeamPage = ({ isAdmin }) => {
   })
   const [savingPlayer, setSavingPlayer] = useState(false)
   const [playerImage, setPlayerImage] = useState(null)
+  const [deletingPlayerId, setDeletingPlayerId] = useState('')
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -1464,6 +1465,26 @@ const TeamPage = ({ isAdmin }) => {
       setPlayersError('Konnte Spieler nicht speichern.')
     } finally {
       setSavingPlayer(false)
+    }
+  }
+
+  const handleDeletePlayer = async (playerId) => {
+    if (!isAdmin) {
+      setPlayersError('Nur Admins koennen Profile löschen.')
+      return
+    }
+    if (!playerId) return
+    const confirmDelete = window.confirm('Profil wirklich löschen?')
+    if (!confirmDelete) return
+    setPlayersError('')
+    setDeletingPlayerId(playerId)
+    try {
+      await deleteDoc(doc(db, 'playerprofiles', playerId))
+    } catch (err) {
+      console.error(err)
+      setPlayersError('Profil konnte nicht geloescht werden.')
+    } finally {
+      setDeletingPlayerId('')
     }
   }
 
@@ -1635,6 +1656,16 @@ const TeamPage = ({ isAdmin }) => {
                             {initials || '?'}
                           </div>
                         )}
+                        {isAdmin ? (
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePlayer(player.id)}
+                            disabled={deletingPlayerId === player.id}
+                            className="absolute right-3 top-3 z-10 rounded-full border border-white/20 bg-slate-900/80 px-3 py-1 text-[11px] font-semibold text-white shadow hover:border-red-400/70 hover:text-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {deletingPlayerId === player.id ? '...' : 'Löschen'}
+                          </button>
+                        ) : null}
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/30 to-slate-900/80" />
                         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-4 py-3">
                           <div>
