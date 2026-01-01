@@ -9,7 +9,19 @@ import {
   useNavigate,
   Navigate,
 } from 'react-router-dom'
-import { addDoc, collection, getDocs, onSnapshot, orderBy, query, serverTimestamp } from 'firebase/firestore'
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+} from 'firebase/firestore'
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { auth, db } from './firebase'
 
@@ -946,30 +958,424 @@ const AboutPage = () => (
   </div>
 )
 
-const GalleryPage = () => (
-  <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
-    <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
-    <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-400/20 via-transparent to-transparent blur-3xl" />
-    <header className="mb-8">
-      <GradientBadge>Galerie</GradientBadge>
-      <h1 className="mt-3 font-display text-4xl font-semibold text-white">Momente & Highlights</h1>
-      <p className="text-slate-300/80">Einblicke in Spiele, Training und Community. Bilder folgen bald.</p>
-    </header>
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-      {[1, 2, 3, 4, 5, 6].map((idx) => (
-        <div
-          key={idx}
-          className="relative h-44 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-slate-900/40 to-orange-400/20 blur-xl" />
-          <div className="relative flex h-full items-center justify-center text-sm font-semibold text-slate-200">
-            Platzhalter Bild {idx}
-          </div>
+const slugify = (value) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '') || `event-${Date.now()}`
+
+const GalleryPage = ({ isAdmin }) => {
+  const [eventName, setEventName] = useState('')
+  const [events, setEvents] = useState([])
+  const [eventError, setEventError] = useState('')
+  const [creatingEvent, setCreatingEvent] = useState(false)
+  const [selectedEventId, setSelectedEventId] = useState('')
+  const [images, setImages] = useState([])
+  const [uploadError, setUploadError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState([])
+  const [editEventName, setEditEventName] = useState('')
+  const [savingEventName, setSavingEventName] = useState(false)
+  const [deletingEvent, setDeletingEvent] = useState(false)
+  const [deletingImageId, setDeletingImageId] = useState('')
+
+  useEffect(() => {
+    const q = query(collection(db, 'galleryEvents'), orderBy('createdAt', 'desc'))
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        setEvents(list)
+        if (selectedEventId && list.length && !list.find((evt) => evt.id === selectedEventId)) {
+          setSelectedEventId('')
+        }
+      },
+      (err) => {
+        console.error(err)
+        setEventError('Events konnten nicht geladen werden.')
+      },
+    )
+    return () => unsubscribe()
+  }, [selectedEventId])
+
+  const selectedEvent = events.find((evt) => evt.id === selectedEventId)
+
+  useEffect(() => {
+    setEditEventName(selectedEvent ? selectedEvent.name || selectedEvent.id : '')
+  }, [selectedEventId, selectedEvent])
+
+  useEffect(() => {
+    if (!selectedEventId) {
+      setImages([])
+      return undefined
+    }
+    const imagesRef = query(
+      collection(db, 'galleryEvents', selectedEventId, 'images'),
+      orderBy('createdAt', 'desc'),
+    )
+    const unsubscribe = onSnapshot(
+      imagesRef,
+      (snapshot) => {
+        setImages(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })))
+      },
+      (err) => {
+        console.error(err)
+        setUploadError('Bilder konnten nicht geladen werden.')
+      },
+    )
+    return () => unsubscribe()
+  }, [selectedEventId])
+
+  const handleCreateEvent = async () => {
+    setEventError('')
+    if (!isAdmin) {
+      setEventError('Nur Admins koennen Events anlegen.')
+      return
+    }
+    const name = eventName.trim()
+    if (!name) {
+      setEventError('Bitte einen Event Namen eingeben.')
+      return
+    }
+    const slug = slugify(name)
+    setCreatingEvent(true)
+    try {
+      const eventRef = doc(db, 'galleryEvents', slug)
+      await setDoc(
+        eventRef,
+        { name, slug, createdAt: serverTimestamp() },
+        { merge: true },
+      )
+      setEventName('')
+      setSelectedEventId(slug)
+    } catch (err) {
+      console.error(err)
+      setEventError('Event konnte nicht angelegt werden.')
+    } finally {
+      setCreatingEvent(false)
+    }
+  }
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files || [])
+    setSelectedFiles(files)
+  }
+
+  const fileToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = () => reject(new Error('Konnte Bild nicht lesen.'))
+      reader.readAsDataURL(file)
+    })
+
+  const handleUpload = async (event) => {
+    event.preventDefault?.()
+    setUploadError('')
+    if (!isAdmin) {
+      setUploadError('Nur Admins koennen Bilder hochladen.')
+      return
+    }
+    if (!selectedEventId) {
+      setUploadError('Bitte zuerst ein Event anlegen oder auswaehlen.')
+      return
+    }
+    if (!selectedFiles.length) {
+      setUploadError('Bitte mindestens ein Bild waehlen.')
+      return
+    }
+    setUploading(true)
+    try {
+      const dataUrls = await Promise.all(selectedFiles.map((file) => fileToBase64(file)))
+      const imagesRef = collection(db, 'galleryEvents', selectedEventId, 'images')
+      await Promise.all(
+        dataUrls.map((dataUrl, idx) =>
+          addDoc(imagesRef, {
+            name: selectedFiles[idx].name,
+            dataUrl,
+            createdAt: serverTimestamp(),
+          }),
+        ),
+      )
+      setSelectedFiles([])
+    } catch (err) {
+      console.error(err)
+      setUploadError('Upload fehlgeschlagen. Bitte versuche es erneut.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleRenameEvent = async () => {
+    if (!isAdmin) {
+      setEventError('Nur Admins koennen Events bearbeiten.')
+      return
+    }
+    if (!selectedEventId) {
+      setEventError('Kein Event ausgewaehlt.')
+      return
+    }
+    const name = editEventName.trim()
+    if (!name) {
+      setEventError('Bitte einen neuen Namen eingeben.')
+      return
+    }
+    setSavingEventName(true)
+    try {
+      const eventRef = doc(db, 'galleryEvents', selectedEventId)
+      await updateDoc(eventRef, { name })
+    } catch (err) {
+      console.error(err)
+      setEventError('Event konnte nicht aktualisiert werden.')
+    } finally {
+      setSavingEventName(false)
+    }
+  }
+
+  const handleDeleteEvent = async () => {
+    if (!isAdmin) {
+      setEventError('Nur Admins koennen Events loeschen.')
+      return
+    }
+    if (!selectedEventId) return
+    const confirmDelete = window.confirm('Event und alle zugehoerigen Bilder loeschen?')
+    if (!confirmDelete) return
+    setDeletingEvent(true)
+    try {
+      const imagesRef = collection(db, 'galleryEvents', selectedEventId, 'images')
+      const imgSnap = await getDocs(imagesRef)
+      await Promise.all(imgSnap.docs.map((d) => deleteDoc(d.ref)))
+      await deleteDoc(doc(db, 'galleryEvents', selectedEventId))
+      setSelectedEventId('')
+    } catch (err) {
+      console.error(err)
+      setEventError('Event konnte nicht geloescht werden.')
+    } finally {
+      setDeletingEvent(false)
+    }
+  }
+
+  const handleDeleteImage = async (imageId) => {
+    if (!isAdmin) {
+      setUploadError('Nur Admins koennen Bilder loeschen.')
+      return
+    }
+    if (!selectedEventId || !imageId) return
+    setDeletingImageId(imageId)
+    try {
+      await deleteDoc(doc(db, 'galleryEvents', selectedEventId, 'images', imageId))
+    } catch (err) {
+      console.error(err)
+      setUploadError('Bild konnte nicht geloescht werden.')
+    } finally {
+      setDeletingImageId('')
+    }
+  }
+
+  return (
+    <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
+      <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-400/20 via-transparent to-transparent blur-3xl" />
+      <header className="mb-8">
+        <GradientBadge>Galerie</GradientBadge>
+        <h1 className="mt-3 font-display text-4xl font-semibold text-white">Momentes & Events</h1>
+      </header>
+
+      {isAdmin ? (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card title="Event anlegen" kicker="Neues">
+            <div className="space-y-3">
+              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                Event Name
+                <input
+                  type="text"
+                  value={eventName}
+                  onChange={(e) => setEventName(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                  placeholder="z.B. Derby 2025"
+                />
+              </label>
+              {eventError ? (
+                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+                  {eventError}
+                </p>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleCreateEvent}
+                disabled={creatingEvent}
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {creatingEvent ? 'Legt an...' : 'Event erstellen'}
+              </button>
+              <p className="text-xs text-slate-400">
+                Beim Klick wird automatisch eine Firestore-Sammlung fuer dieses Event erzeugt.
+              </p>
+            </div>
+          </Card>
+
+          <Card title="Bilder hochladen" kicker="Upload">
+            <form className="space-y-3" onSubmit={handleUpload}>
+              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                Event Auswahl
+                <select
+                  value={selectedEventId}
+                  onChange={(e) => setSelectedEventId(e.target.value)}
+                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                >
+                  <option value="">Event waehlen...</option>
+                  {events.map((evt) => (
+                    <option key={evt.id} value={evt.id}>
+                      {evt.name || evt.id}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                Bilder
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  multiple
+                  onChange={handleFileChange}
+                  className="block w-full rounded-lg border border-dashed border-white/20 bg-slate-800/70 px-3 py-2 text-sm text-slate-100 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/30 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-white"
+                />
+                {selectedFiles.length ? (
+                  <p className="text-xs text-emerald-200/80">
+                    Ausgewaehlt: {selectedFiles.length} Datei(en)
+                  </p>
+                ) : (
+                  <p className="text-xs text-slate-400">PNG oder JPG, mehrere Dateien moeglich.</p>
+                )}
+              </label>
+
+              {uploadError ? (
+                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+                  {uploadError}
+                </p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={uploading}
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {uploading ? 'Laedt hoch...' : 'Bilder speichern'}
+              </button>
+            </form>
+          </Card>
         </div>
-      ))}
+      ) : null}
+
+      {selectedEventId === '' ? (
+        <div className="mt-8 space-y-4">
+          {events.length === 0 ? (
+            <span className="text-sm text-slate-400">Noch keine Events vorhanden.</span>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {events.map((evt) => (
+                <button
+                  key={evt.id}
+                  type="button"
+                  onClick={() => setSelectedEventId(evt.id)}
+                  className="rounded-3xl border border-white/10 bg-slate-900/70 px-5 py-5 text-left shadow-sm transition hover:border-emerald-300/35 hover:bg-white/5"
+                >
+                  <p className="text-lg font-semibold text-white leading-snug">{evt.name || evt.id}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="mt-8 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xl font-semibold text-white">
+              {selectedEvent ? selectedEvent.name || selectedEvent.id : 'Event'}
+            </p>
+            <div className="flex items-center gap-2">
+              {isAdmin ? (
+                <>
+                  <input
+                    type="text"
+                    value={editEventName}
+                    onChange={(e) => setEditEventName(e.target.value)}
+                    className="rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-sm text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                    placeholder="Event-Namen bearbeiten"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRenameEvent}
+                    disabled={savingEventName}
+                    className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50 disabled:opacity-60"
+                  >
+                    {savingEventName ? 'Speichert...' : 'Speichern'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteEvent}
+                    disabled={deletingEvent}
+                    className="rounded-full border border-red-400/60 px-3 py-1 text-xs font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-60"
+                  >
+                    {deletingEvent ? 'Loescht...' : 'Event loeschen'}
+                  </button>
+                </>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setSelectedEventId('')}
+                className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50"
+              >
+                Zurueck zu Events
+              </button>
+            </div>
+          </div>
+
+          {images.length === 0 ? (
+            <p className="text-sm text-slate-300/80">
+              Noch keine Bilder gespeichert. Lade jetzt welche hoch.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {images.map((img) => (
+                <div
+                  key={img.id}
+                  className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/70 shadow-lg shadow-emerald-500/10"
+                >
+                  {img.dataUrl ? (
+                    <div className="relative aspect-[4/3] bg-slate-800/60">
+                      <img
+                        src={img.dataUrl}
+                        alt="Event Bild"
+                        className="absolute inset-0 h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                      {isAdmin ? (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteImage(img.id)}
+                          disabled={deletingImageId === img.id}
+                          className="absolute right-3 top-3 rounded-full border border-white/20 bg-slate-900/70 px-2 py-1 text-[10px] font-semibold text-white shadow hover:border-red-400/60 hover:text-red-200 disabled:opacity-60"
+                        >
+                          {deletingImageId === img.id ? '...' : 'Loeschen'}
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="flex aspect-[4/3] items-center justify-center bg-slate-800/50 text-sm text-slate-300/70">
+                      Kein Bildinhalt vorhanden
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
-  </div>
-)
+  )
+}
 
 const TeamPage = ({ isAdmin }) => {
   const [players, setPlayers] = useState([])
@@ -1606,7 +2012,7 @@ const AppShell = () => {
           element={<HomePage />}
         />
         <Route path="/tabelle-oeffentlich" element={<PublicTablePage standings={standings} matches={matches} />} />
-        <Route path="/galerie" element={<GalleryPage />} />
+        <Route path="/galerie" element={<GalleryPage isAdmin={isAdmin} />} />
         <Route
           path="/tabelle"
           element={
