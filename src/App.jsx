@@ -60,7 +60,7 @@ const PUBLIC_NAV_ITEMS = [
   { to: '/tabelle-oeffentlich', label: 'Tabelle' },
   { to: '/galerie', label: 'Galerie' },
   { to: '/anfahrt', label: 'Anfahrt' },
-  { to: '/ueber-uns', label: 'Über uns' },
+  { to: '/ueber-uns', label: 'über uns' },
 ]
 
 const PRIVATE_NAV_ITEMS = [
@@ -70,7 +70,7 @@ const PRIVATE_NAV_ITEMS = [
   { to: '/mannschaft', label: 'Mannschaft' },
   { to: '/galerie', label: 'Galerie' },
   { to: '/anfahrt', label: 'Anfahrt' },
-  { to: '/ueber-uns', label: 'Über uns' },
+  { to: '/ueber-uns', label: 'über uns' },
 ]
 
 const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
@@ -349,7 +349,7 @@ const HomePage = () => (
     <header className="mb-10 rounded-3xl border border-white/5 bg-slate-900/70 p-8 shadow-soft backdrop-blur">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="space-y-3">
-          <GradientBadge>Gut Schluck Hauset - Fussball</GradientBadge>
+          <GradientBadge>Über Gut Schluck Hauset - Fussball</GradientBadge>
           <h1 className="font-display text-4xl font-semibold text-white sm:text-5xl">
             Ergebnisse melden. Tabelle aktualisieren. Modern & sicher.
           </h1>
@@ -391,7 +391,7 @@ const HomePage = () => (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <Card title="Unsere DNA" kicker="Verein">
         <p className="text-sm text-slate-200/90">
-          Mehr als ein Klub: Gut Schluck Hauset steht fuer Teamgeist, Nachwuchsfoerderung und packende Heimspiele. Wir
+          Mehr als ein Klub: Gut Schluck Hauset steht fuer Teamgeist, Nachwuchsförderung und packende Heimspiele. Wir
           investieren in Jugend, modernisieren Strukturen und bleiben immer nah an Fans und Dorf.
         </p>
         <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300/80">
@@ -569,7 +569,7 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
     <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
     <header className="mb-8">
       <GradientBadge>Ergebnisse & Tabelle</GradientBadge>
-      <h1 className="mt-3 font-display text-4xl font-semibold text-white">SpielstÃ¤nde und Ranking</h1>
+      <h1 className="mt-3 font-display text-4xl font-semibold text-white">Spielstände und Ranking</h1>
       <p className="text-slate-300/80">
         Checke die aktuelle Tabelle und sieh dir den Live-Feed an
       </p>
@@ -593,7 +593,7 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
                 </select>
               </label>
               <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                AuswÃ¤rtsteam
+                Auswärtssteam
                 <select
                   value={form.awayTeam}
                   onChange={handleChange('awayTeam')}
@@ -653,7 +653,7 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
                 disabled={saving}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {saving ? 'Speichernâ€¦' : 'Ergebnis speichern'}
+                {saving ? 'Speichern…' : 'Ergebnis speichern'}
               </button>
             </div>
           </form>
@@ -850,14 +850,14 @@ const AnfahrtPage = () => (
               <br />
               4730 Raeren
             </p>
-            <p className="text-xs text-slate-400">ParkplÃ¤tze direkt vor dem Platz - Buslinie 722 bis "Hauset Dorf"</p>
+            <p className="text-xs text-slate-400">Parkplätze direkt vor dem Platz - Buslinie 722 bis "Hauset Dorf"</p>
             <a
               href="https://maps.google.com/?q=Kirchstra%C3%9Fe+97,+4730+Raeren"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700"
             >
-              In Google Maps oeffnen
+              In Google Maps öffnen
             </a>
           </div>
           <div className="w-full max-w-lg md:ml-auto">
@@ -906,7 +906,7 @@ const AboutPage = () => (
         Seit 1973 stehen wir für Leidenschaft, Gemeinschaft und die Liebe zum Fussball.
         <br />
         Was als Dorfmannschaft begann,
-        ist heute ein stolzer Verein mit einer groÃŸen Familie.
+        ist heute ein stolzer Verein mit einer großen Familie.
       </p>
     </header>
 
@@ -928,20 +928,20 @@ const AboutPage = () => (
         </p>
         <p className="text-sm text-slate-200/90">
           Mit mehr als 100 Mitgliedern von Jugend bis Senioren leben wir Gemeinschaftsgeist, Fairplay und die Werte, die
-          uns seit Jahrzehnten prÃ¤gen.
+          uns seit Jahrzehnten prägen.
         </p>
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-50">
-          Mehr als Fussball - wir sind eine Familie, die zusammenhÃ¤lt und gemeinsam trÃ¤umt.
+          Mehr als Fussball - wir sind eine Familie, die zusammenhält und gemeinsam träumt.
         </div>
       </div>
     </div>
 
     <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {[
-        { icon: 'ðŸ¤', title: 'Gemeinschaft', body: 'Wir sind mehr als ein Verein - wir sind eine Familie' },
-        { icon: 'ðŸ†', title: 'Tradition', body: 'Über 50 Jahre Vereinsgeschichte prÃ¤gen unsere IdentitÃ¤t' },
-        { icon: 'ðŸŒ±', title: 'Nachwuchs', body: 'FÃ¶rderung junger Talente' },
-        { icon: 'âš–ï¸', title: 'Fairplay', body: 'Respekt und Fairness sind die Grundpfeiler unseres Sports' },
+        { icon: '🤝', title: 'Gemeinschaft', body: 'Wir sind mehr als ein Verein - wir sind eine Familie' },
+        { icon: '🏟️', title: 'Tradition', body: 'Über 50 Jahre Vereinsgeschichte prägen unsere Identität' },
+        { icon: '🌱', title: 'Nachwuchs', body: 'Förderung junger Talente' },
+        { icon: '⚖️', title: 'Fairplay', body: 'Respekt und Fairness sind die Grundpfeiler unseres Sports' },
       ].map((item) => (
         <div
           key={item.title}
@@ -1030,7 +1030,7 @@ const GalleryPage = ({ isAdmin }) => {
   const handleCreateEvent = async () => {
     setEventError('')
     if (!isAdmin) {
-      setEventError('Nur Admins koennen Events anlegen.')
+      setEventError('Nur Admins können Events anlegen.')
       return
     }
     const name = eventName.trim()
@@ -1074,11 +1074,11 @@ const GalleryPage = ({ isAdmin }) => {
     event.preventDefault?.()
     setUploadError('')
     if (!isAdmin) {
-      setUploadError('Nur Admins koennen Bilder hochladen.')
+      setUploadError('Nur Admins können Bilder hochladen.')
       return
     }
     if (!selectedEventId) {
-      setUploadError('Bitte zuerst ein Event anlegen oder auswaehlen.')
+      setUploadError('Bitte zuerst ein Event anlegen oder auswählen.')
       return
     }
     if (!selectedFiles.length) {
@@ -1109,11 +1109,11 @@ const GalleryPage = ({ isAdmin }) => {
 
   const handleRenameEvent = async () => {
     if (!isAdmin) {
-      setEventError('Nur Admins koennen Events bearbeiten.')
+      setEventError('Nur Admins können Events bearbeiten.')
       return
     }
     if (!selectedEventId) {
-      setEventError('Kein Event ausgewaehlt.')
+      setEventError('Kein Event ausgewählt.')
       return
     }
     const name = editEventName.trim()
@@ -1135,11 +1135,11 @@ const GalleryPage = ({ isAdmin }) => {
 
   const handleDeleteEvent = async () => {
     if (!isAdmin) {
-      setEventError('Nur Admins koennen Events löschen.')
+      setEventError('Nur Admins können Events löschen.')
       return
     }
     if (!selectedEventId) return
-    const confirmDelete = window.confirm('Event und alle zugehoerigen Bilder löschen?')
+    const confirmDelete = window.confirm('Event und alle zugehörigen Bilder löschen?')
     if (!confirmDelete) return
     setDeletingEvent(true)
     try {
@@ -1150,7 +1150,7 @@ const GalleryPage = ({ isAdmin }) => {
       setSelectedEventId('')
     } catch (err) {
       console.error(err)
-      setEventError('Event konnte nicht geloescht werden.')
+      setEventError('Event konnte nicht gelöscht werden.')
     } finally {
       setDeletingEvent(false)
     }
@@ -1158,7 +1158,7 @@ const GalleryPage = ({ isAdmin }) => {
 
   const handleDeleteImage = async (imageId) => {
     if (!isAdmin) {
-      setUploadError('Nur Admins koennen Bilder löschen.')
+      setUploadError('Nur Admins können Bilder löschen.')
       return
     }
     if (!selectedEventId || !imageId) return
@@ -1167,7 +1167,7 @@ const GalleryPage = ({ isAdmin }) => {
       await deleteDoc(doc(db, 'galleryEvents', selectedEventId, 'images', imageId))
     } catch (err) {
       console.error(err)
-      setUploadError('Bild konnte nicht geloescht werden.')
+      setUploadError('Bild konnte nicht gelöscht werden.')
     } finally {
       setDeletingImageId('')
     }
@@ -1209,9 +1209,6 @@ const GalleryPage = ({ isAdmin }) => {
               >
                 {creatingEvent ? 'Legt an...' : 'Event erstellen'}
               </button>
-              <p className="text-xs text-slate-400">
-                Beim Klick wird automatisch eine Firestore-Sammlung fuer dieses Event erzeugt.
-              </p>
             </div>
           </Card>
 
@@ -1247,7 +1244,7 @@ const GalleryPage = ({ isAdmin }) => {
                     Ausgewaehlt: {selectedFiles.length} Datei(en)
                   </p>
                 ) : (
-                  <p className="text-xs text-slate-400">PNG oder JPG, mehrere Dateien moeglich.</p>
+                  <p className="text-xs text-slate-400">PNG oder JPG, mehrere Dateien möglich.</p>
                 )}
               </label>
 
@@ -1318,7 +1315,7 @@ const GalleryPage = ({ isAdmin }) => {
                     disabled={deletingEvent}
                     className="rounded-full border border-red-400/60 px-3 py-1 text-xs font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-60"
                   >
-                    {deletingEvent ? 'Loescht...' : 'Event löschen'}
+                    {deletingEvent ? 'Löscht...' : 'Event löschen'}
                   </button>
                 </>
               ) : null}
@@ -1327,7 +1324,7 @@ const GalleryPage = ({ isAdmin }) => {
                 onClick={() => setSelectedEventId('')}
                 className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50"
               >
-                Zurueck zu Events
+                Zurück zu Events
               </button>
             </div>
           </div>
@@ -1470,7 +1467,7 @@ const TeamPage = ({ isAdmin }) => {
 
   const handleDeletePlayer = async (playerId) => {
     if (!isAdmin) {
-      setPlayersError('Nur Admins koennen Profile löschen.')
+      setPlayersError('Nur Admins können Profile löschen.')
       return
     }
     if (!playerId) return
@@ -1482,7 +1479,7 @@ const TeamPage = ({ isAdmin }) => {
       await deleteDoc(doc(db, 'playerprofiles', playerId))
     } catch (err) {
       console.error(err)
-      setPlayersError('Profil konnte nicht geloescht werden.')
+      setPlayersError('Profil konnte nicht gelöscht werden.')
     } finally {
       setDeletingPlayerId('')
     }
@@ -1861,7 +1858,7 @@ const LoginPage = ({ user }) => {
             disabled={loading}
             className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? 'Anmeldung lÃ¤uft...' : 'Anmelden'}
+            {loading ? 'Anmeldung läuft...' : 'Anmelden'}
           </button>
         </form>
       </div>
@@ -1993,13 +1990,13 @@ const AppShell = () => {
     event.preventDefault()
     setError('')
     if (form.homeTeam === form.awayTeam) {
-      setError('Heim- und AuswÃ¤rtsteam muessen unterschiedlich sein.')
+      setError('Heim- und Auswärtssteam müssen unterschiedlich sein.')
       return
     }
     const hs = Number(form.homeScore)
     const as = Number(form.awayScore)
     if ([hs, as].some(Number.isNaN) || hs < 0 || as < 0) {
-      setError('Bitte gueltige Tore eingeben (0 oder hoeher).')
+      setError('Bitte gültige Tore eingeben (0 oder höher).')
       return
     }
     setSaving(true)
@@ -2087,6 +2084,18 @@ function App() {
 }
 
 export default App
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
