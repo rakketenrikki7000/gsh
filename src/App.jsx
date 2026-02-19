@@ -979,6 +979,7 @@ const GalleryPage = ({ isAdmin }) => {
   const [savingEventName, setSavingEventName] = useState(false)
   const [deletingEvent, setDeletingEvent] = useState(false)
   const [deletingImageId, setDeletingImageId] = useState('')
+  const [lightboxIndex, setLightboxIndex] = useState(null)
 
   useEffect(() => {
     const q = query(collection(db, 'galleryEvents'), orderBy('createdAt', 'desc'))
@@ -1026,6 +1027,63 @@ const GalleryPage = ({ isAdmin }) => {
     )
     return () => unsubscribe()
   }, [selectedEventId])
+
+  useEffect(() => {
+    setLightboxIndex(null)
+  }, [selectedEventId])
+
+  useEffect(() => {
+    if (lightboxIndex === null) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setLightboxIndex(null)
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault()
+        setLightboxIndex((prev) => {
+          if (prev === null || images.length === 0) return null
+          return (prev - 1 + images.length) % images.length
+        })
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        setLightboxIndex((prev) => {
+          if (prev === null || images.length === 0) return null
+          return (prev + 1) % images.length
+        })
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lightboxIndex, images.length])
+
+  useEffect(() => {
+    if (lightboxIndex === null) return
+    if (images.length === 0) {
+      setLightboxIndex(null)
+      return
+    }
+    if (lightboxIndex > images.length - 1) {
+      setLightboxIndex(images.length - 1)
+    }
+  }, [images, lightboxIndex])
+
+  const currentLightboxImage =
+    lightboxIndex !== null && images[lightboxIndex] ? images[lightboxIndex] : null
+
+  const showPrevImage = () => {
+    if (!images.length) return
+    setLightboxIndex((prev) => {
+      if (prev === null) return 0
+      return (prev - 1 + images.length) % images.length
+    })
+  }
+
+  const showNextImage = () => {
+    if (!images.length) return
+    setLightboxIndex((prev) => {
+      if (prev === null) return 0
+      return (prev + 1) % images.length
+    })
+  }
 
   const handleCreateEvent = async () => {
     setEventError('')
@@ -1335,23 +1393,33 @@ const GalleryPage = ({ isAdmin }) => {
             </p>
           ) : (
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {images.map((img) => (
+              {images.map((img, idx) => (
                 <div
                   key={img.id}
                   className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/70 shadow-lg shadow-emerald-500/10"
                 >
                   {img.dataUrl ? (
                     <div className="relative aspect-[4/3] bg-slate-800/60">
-                      <img
-                        src={img.dataUrl}
-                        alt="Event Bild"
-                        className="absolute inset-0 h-full w-full object-cover"
-                        loading="lazy"
-                      />
+                      <button
+                        type="button"
+                        onClick={() => setLightboxIndex(idx)}
+                        className="absolute inset-0 cursor-zoom-in"
+                        aria-label="Bild in Originalgröße anzeigen"
+                      >
+                        <img
+                          src={img.dataUrl}
+                          alt={img.name || 'Event Bild'}
+                          className="absolute inset-0 h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      </button>
                       {isAdmin ? (
                         <button
                           type="button"
-                          onClick={() => handleDeleteImage(img.id)}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleDeleteImage(img.id)
+                          }}
                           disabled={deletingImageId === img.id}
                           className="absolute right-3 top-3 rounded-full border border-white/20 bg-slate-900/70 px-2 py-1 text-[10px] font-semibold text-white shadow hover:border-red-400/60 hover:text-red-200 disabled:opacity-60"
                         >
@@ -1370,6 +1438,62 @@ const GalleryPage = ({ isAdmin }) => {
           )}
         </div>
       )}
+
+      {currentLightboxImage?.dataUrl ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 p-4"
+          onClick={() => setLightboxIndex(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxIndex(null)}
+            className="absolute right-5 top-5 rounded-full border border-white/20 bg-slate-900/80 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50"
+          >
+            Schließen
+          </button>
+          {images.length > 1 ? (
+            <>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  showPrevImage()
+                }}
+                className="absolute left-5 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-slate-900/80 px-3 py-2 text-lg font-bold text-white hover:border-emerald-300/50 hover:text-emerald-50"
+                aria-label="Vorheriges Bild"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  showNextImage()
+                }}
+                className="absolute right-5 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-slate-900/80 px-3 py-2 text-lg font-bold text-white hover:border-emerald-300/50 hover:text-emerald-50"
+                aria-label="Nächstes Bild"
+              >
+                ›
+              </button>
+            </>
+          ) : null}
+          <div
+            className="max-h-[90vh] max-w-[95vw] overflow-auto rounded-2xl border border-white/15 bg-slate-900/60 p-2"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <img
+              src={currentLightboxImage.dataUrl}
+              alt={currentLightboxImage.name || 'Event Bild'}
+              className="h-auto w-auto max-w-none"
+            />
+          </div>
+          {images.length > 1 && lightboxIndex !== null ? (
+            <p className="absolute bottom-5 rounded-full border border-white/15 bg-slate-900/80 px-3 py-1 text-xs font-semibold text-slate-100">
+              {lightboxIndex + 1} / {images.length}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }
