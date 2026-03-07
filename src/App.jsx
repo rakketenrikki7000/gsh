@@ -21,19 +21,28 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore'
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { auth, db } from './firebase'
 
 const TEAM_OPTIONS = [
+  'ASV Werth',
+  'BSV Rakete',
+  'Bilstain',
   'Gut Schluck Hauset',
-  'Tornado',
-  'Weserkicker',
-  'Raeren Berg',
+  'Hall Star',
   'Herbestha',
   'Inferno',
-  'Werth',
+  'Kettenis A',
+  'Kettenis B',
+  'Raeren Berg',
+  'Tanja',
+  'Tornado',
+  'Tülje',
   'Walk',
+  'Werth',
+  'Weserkicker'
 ]
 
 const POSITION_GROUPS = [
@@ -48,9 +57,9 @@ const SPONSOR_LOGOS = [
   { src: '/Dienstleistungen_Stefan_Siffrin.jpg', alt: 'Dienstleistungen Stefan Siffrin', href: 'https://be.linkedin.com/in/stefan-siffrin-552864158' },
   { src: '/jkmotor-raeder.jpg', alt: 'JK Motor Raeder', href: 'https://www.jkmotorraeder.be/' },
   { src: '/Elektro_Bemelmans.png', alt: 'Elektro Bemelmans', href: 'https://elektro-bemelmans.be/' },
-  { src: '/Metzgerei_Vincent.jpg', alt: 'Metzgerei Vincent', href: 'https://www.facebook.com/people/Metzgerei-boucherie-Dorthu-Steyns/100054569703802/'},
-  { src: '/Mauel.png', alt: 'Mauel', href: 'https://www.mauel.be/'},
-  { src: '/Ralph_Creutz.jpg', alt: 'Ralph Creutz', href: 'https://www.creutz-ralph.be/'},
+  { src: '/Metzgerei_Vincent.jpg', alt: 'Metzgerei Vincent', href: 'https://www.facebook.com/people/Metzgerei-boucherie-Dorthu-Steyns/100054569703802/' },
+  { src: '/Mauel.png', alt: 'Mauel', href: 'https://www.mauel.be/' },
+  { src: '/Ralph_Creutz.jpg', alt: 'Ralph Creutz', href: 'https://www.creutz-ralph.be/' },
 ]
 const SPONSOR_LOOP = [...SPONSOR_LOGOS, ...SPONSOR_LOGOS, ...SPONSOR_LOGOS, ...SPONSOR_LOGOS]
 
@@ -78,6 +87,7 @@ const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
   .map((v) => v.trim().toLowerCase())
   .filter(Boolean)
 
+const TABLE_STORAGE_KEY = 'gsh-active-table'
 
 const formatDate = (value) => {
   if (!value) return '-'
@@ -277,9 +287,8 @@ const TopNav = ({ user, onLogout, navItems }) => {
         </button>
 
         <nav
-          className={`${
-            open ? 'flex' : 'hidden'
-          } absolute left-0 right-0 top-full flex-col gap-2 border-b border-white/5 bg-slate-950/95 px-4 pb-4 md:static md:flex md:flex-row md:items-center md:gap-2 md:border-none md:bg-transparent md:p-0`}
+          className={`${open ? 'flex' : 'hidden'
+            } absolute left-0 right-0 top-full flex-col gap-2 border-b border-white/5 bg-slate-950/95 px-4 pb-4 md:static md:flex md:flex-row md:items-center md:gap-2 md:border-none md:bg-transparent md:p-0`}
         >
           {navItems.map((item) => (
             <NavLink
@@ -492,7 +501,22 @@ const NewsPage = () => (
   </div>
 )
 
-const TablePage = ({ matches, standings, form, handleChange, handleSubmit, saving, error, isAdmin }) => {
+const TablePage = ({
+  matches,
+  form,
+  handleChange,
+  handleSubmit,
+  saving,
+  error,
+  isAdmin,
+  tables,
+  selectedTableId,
+  onSelectTable,
+  activeTable,
+  tablesError,
+  loadingTables,
+  onDeleteTable,
+}) => {
   const toTime = (value) => {
     if (!value) return 0
     if (value?.toDate) return value.toDate().getTime()
@@ -507,19 +531,97 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
   const [noteForm, setNoteForm] = useState({ body: '' })
   const [savingNote, setSavingNote] = useState(false)
   const [noteExpanded, setNoteExpanded] = useState(false)
+  const [tableForm, setTableForm] = useState({ name: '' })
+  const [creatingTable, setCreatingTable] = useState(false)
+  const [tableCreateError, setTableCreateError] = useState('')
+  const [deletingTableId, setDeletingTableId] = useState('')
+  const [tableDeleteError, setTableDeleteError] = useState('')
+  const [deletingMatchId, setDeletingMatchId] = useState('')
+  const [matchDeleteError, setMatchDeleteError] = useState('')
+
+  const activeMatches = useMemo(() => {
+    if (!selectedTableId) return []
+    return matches.filter((match) => match.tableId === selectedTableId)
+  }, [matches, selectedTableId])
 
   const latestMatches = useMemo(
     () =>
-      [...matches]
+      [...activeMatches]
         .sort((a, b) => (toTime(b.date || b.createdAt) ?? 0) - (toTime(a.date || a.createdAt) ?? 0))
         .slice(0, 4),
-    [matches],
+    [activeMatches],
   )
 
-  const standingsView = useMemo(() => computeStandings(matches, rankingFilter), [matches, rankingFilter])
+  const standingsView = useMemo(
+    () => computeStandings(activeMatches, rankingFilter),
+    [activeMatches, rankingFilter],
+  )
+  const tableTitle = activeTable ? activeTable.name : 'Tabelle'
 
   const handleNoteChange = (event) => {
     setNoteForm({ body: event.target.value })
+  }
+
+  const handleTableField = (field) => (event) => {
+    setTableForm((prev) => ({ ...prev, [field]: event.target.value }))
+  }
+
+  const handleCreateTable = async (event) => {
+    event.preventDefault()
+    setTableCreateError('')
+    const name = tableForm.name.trim()
+    if (!name) {
+      setTableCreateError('Bitte einen Tabellennamen eingeben.')
+      return
+    }
+    setCreatingTable(true)
+    try {
+      const docRef = await addDoc(collection(db, 'tables'), {
+        name,
+        createdAt: serverTimestamp(),
+      })
+      setTableForm({ name: '' })
+      onSelectTable?.(docRef.id)
+    } catch (err) {
+      console.error(err)
+      setTableCreateError('Konnte Tabelle nicht erstellen.')
+    } finally {
+      setCreatingTable(false)
+    }
+  }
+
+  const handleDeleteTable = async (tableId, label) => {
+    if (!tableId || !onDeleteTable) return
+    const ok = window.confirm(
+      `Tabelle "${label}" wirklich löschen? Alle Spiele darin werden ebenfalls gelöscht.`,
+    )
+    if (!ok) return
+    setTableDeleteError('')
+    setDeletingTableId(tableId)
+    try {
+      await onDeleteTable(tableId)
+    } catch (err) {
+      console.error(err)
+      setTableDeleteError('Konnte Tabelle nicht löschen.')
+    } finally {
+      setDeletingTableId('')
+    }
+  }
+
+  const handleDeleteMatch = async (matchId) => {
+    if (!matchId) return
+    const ok = window.confirm('Dieses Ergebnis wirklich löschen?')
+    if (!ok) return
+    setMatchDeleteError('')
+    setDeletingMatchId(matchId)
+    try {
+      await deleteDoc(doc(db, 'matches', matchId))
+    } catch (err) {
+      console.error(err)
+      setMatchDeleteError('Konnte Ergebnis nicht löschen.')
+    } finally {
+      setDeletingMatchId('')
+    }
   }
 
   const handleNoteSubmit = async (event) => {
@@ -565,269 +667,384 @@ const TablePage = ({ matches, standings, form, handleChange, handleSubmit, savin
 
   return (
     <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
-    <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
-    <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
-    <header className="mb-8">
-      <GradientBadge>Ergebnisse & Tabelle</GradientBadge>
-      <h1 className="mt-3 font-display text-4xl font-semibold text-white">Spielstände und Ranking</h1>
-      <p className="text-slate-300/80">
-        Checke die aktuelle Tabelle und sieh dir den Live-Feed an
-      </p>
-    </header>
+      <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
+      <header className="mb-8">
+        <GradientBadge>Ergebnisse & Tabelle</GradientBadge>
+        <h1 className="mt-3 font-display text-4xl font-semibold text-white">Spielstände und Ranking</h1>
+        <p className="text-slate-300/80">
+          Checke die aktuelle Tabelle und sieh dir den Live-Feed an
+        </p>
+      </header>
 
-    <div className={`grid grid-cols-1 gap-6 ${isAdmin ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`} id="report">
-      {isAdmin ? (
-        <Card title="Ergebnis erfassen" kicker="Workflow">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                Heimteam
-                <select
-                  value={form.homeTeam}
-                  onChange={handleChange('homeTeam')}
-                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none ring-emerald-500/50 focus:border-emerald-300 focus:ring-2"
-                >
-                  {TEAM_OPTIONS.map((team) => (
-                    <option key={`home-${team}`}>{team}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                Auswärtssteam
-                <select
-                  value={form.awayTeam}
-                  onChange={handleChange('awayTeam')}
-                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none ring-orange-500/50 focus:border-orange-300 focus:ring-2"
-                >
-                  {TEAM_OPTIONS.map((team) => (
-                    <option key={`away-${team}`}>{team}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                Heim-Tore
-                <input
-                  type="number"
-                  min="0"
-                  value={form.homeScore}
-                  onChange={handleChange('homeScore')}
-                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
-                  required
-                />
-              </label>
-              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                Auswaerts-Tore
-                <input
-                  type="number"
-                  min="0"
-                  value={form.awayScore}
-                  onChange={handleChange('awayScore')}
-                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-500/40"
-                  required
-                />
-              </label>
-              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                Datum
-                <input
-                  type="date"
-                  value={form.date}
-                  onChange={handleChange('date')}
-                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-white/30 focus:ring-2 focus:ring-white/20"
-                  required
-                />
-              </label>
-            </div>
-
-            {error ? (
-              <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
-                {error}
-              </p>
-            ) : null}
-
-            <div className="flex items-center gap-3">
-              <button
-                type="submit"
-                disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {saving ? 'Speichern…' : 'Ergebnis speichern'}
-              </button>
-            </div>
-          </form>
-        </Card>
-      ) : null}
-
-      <Card title="Letzte Ergebnisse" kicker="Live Feed" id="results">
-        <div className="space-y-3">
-          {latestMatches.length === 0 ? (
-            <p className="text-sm text-slate-300/70">Noch keine Spiele gespeichert.</p>
-          ) : (
-            latestMatches.map((match) => {
-              const isGsh = match.homeTeam === 'Gut Schluck Hauset' || match.awayTeam === 'Gut Schluck Hauset'
-              return (
-                <div
-                  key={match.id}
-                  className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${
-                    isGsh
-                      ? 'border-emerald-400/50 bg-emerald-500/10 shadow-lg shadow-emerald-500/20'
-                      : 'border-white/5 bg-white/5'
-                  }`}
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-white">
-                      {match.homeTeam} <span className="text-emerald-200">vs</span> {match.awayTeam}
-                    </p>
-                    <p className="text-xs text-slate-300/70">{formatDate(match.date)}</p>
-                  </div>
-                  <div
-                    className={`rounded-full px-3 py-1 text-sm font-semibold ${
-                      isGsh ? 'bg-emerald-500/20 text-emerald-50' : 'bg-slate-900/80 text-emerald-100'
-                    }`}
-                  >
-                    {match.homeScore} : {match.awayScore}
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </div>
-      </Card>
-
-      <Card title="Traineranmerkung" kicker="GSH" id="notes">
-        <div className="space-y-4">
+      <div className="space-y-6" id="report">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {isAdmin ? (
-            <form className="space-y-3" onSubmit={handleNoteSubmit}>
-              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                Anmerkung
-                <textarea
-                  value={noteForm.body}
-                  onChange={handleNoteChange}
-                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
-                  rows="3"
-                  placeholder="Kurz anmerken..."
-                />
-              </label>
-              {notesError ? (
-                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
-                  {notesError}
-                </p>
-              ) : null}
-              <button
-                type="submit"
-                disabled={savingNote}
-                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {savingNote ? 'Speichert...' : 'Anmerkung speichern'}
-              </button>
-            </form>
+            <Card title="Tabellen verwalten" kicker="Admin">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/70">Aktive Tabelle</p>
+                  <div className="mt-2">
+                    {loadingTables ? (
+                      <p className="text-sm text-slate-300/70">Lade Tabellen...</p>
+                    ) : tablesError ? (
+                      <p className="text-sm text-red-200/90">{tablesError}</p>
+                    ) : tables.length === 0 ? (
+                      <p className="text-sm text-slate-300/70">Noch keine Tabelle vorhanden.</p>
+                    ) : (
+                      <select
+                        value={selectedTableId || ''}
+                        onChange={(event) => onSelectTable?.(event.target.value)}
+                        className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-sm text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                      >
+                        {tables.map((table) => (
+                          <option key={table.id} value={table.id}>
+                            {table.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                  {selectedTableId && activeTable ? (
+                    <button
+                      type="button"
+                      disabled={deletingTableId === selectedTableId}
+                      onClick={() => handleDeleteTable(selectedTableId, activeTable.name)}
+                      className="mt-3 inline-flex items-center justify-center rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {deletingTableId === selectedTableId ? 'Loesche...' : 'Tabelle loeschen'}
+                    </button>
+                  ) : null}
+                </div>
+
+                <form className="space-y-3" onSubmit={handleCreateTable}>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/70">
+                    Neue Tabelle
+                  </p>
+                  <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                    Name
+                    <input
+                      type="text"
+                      value={tableForm.name}
+                      onChange={handleTableField('name')}
+                      className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                      placeholder="z.B. Saison 2026"
+                    />
+                  </label>
+                  {tableCreateError ? (
+                    <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+                      {tableCreateError}
+                    </p>
+                  ) : null}
+                  {tableDeleteError ? (
+                    <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+                      {tableDeleteError}
+                    </p>
+                  ) : null}
+                  <button
+                    type="submit"
+                    disabled={creatingTable}
+                    className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {creatingTable ? 'Erstellt...' : 'Tabelle erstellen'}
+                  </button>
+                </form>
+              </div>
+            </Card>
           ) : null}
 
-          <div className="space-y-3">
-            {loadingNotes ? (
-              <p className="text-sm text-slate-300/70">Lade Notizen...</p>
-            ) : notesError ? (
-              <p className="text-sm text-red-200/90">{notesError}</p>
-            ) : notes.length === 0 ? (
-              <p className="text-sm text-slate-300/70">Noch keine Notizen vorhanden.</p>
-            ) : (
-              (() => {
-                const note = notes[0]
-                const noteText = note.body || note.text || ''
-                const wordList = noteText.trim() ? noteText.trim().split(/\s+/) : []
-                const isLong = wordList.length > 150
-                const displayText =
-                  isLong && !noteExpanded ? `${wordList.slice(0, 150).join(' ')} ...` : noteText
-                return (
-                  <div key={note.id} className="rounded-2xl border border-white/5 bg-white/5 p-3">
-                    <p className="text-sm text-slate-200/90">{displayText}</p>
-                    <p className="mt-1 text-[11px] text-slate-300/70">{formatDate(note.createdAt)}</p>
-                    {isLong ? (
-                      <button
-                        type="button"
-                        onClick={() => setNoteExpanded((v) => !v)}
-                        className="mt-2 text-xs font-semibold text-emerald-200 hover:text-emerald-100"
-                      >
-                        {noteExpanded ? 'Weniger anzeigen' : 'Mehr öffnen'}
-                      </button>
-                    ) : null}
-                  </div>
-                )
-              })()
-            )}
-          </div>
+          {isAdmin ? (
+            <Card title="Ergebnis erfassen" kicker="Workflow">
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                  Tabelle
+                  {tables.length === 0 ? (
+                    <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-100">
+                      Noch keine Tabelle vorhanden. Bitte zuerst eine Tabelle anlegen.
+                    </div>
+                  ) : (
+                    <select
+                      value={selectedTableId || ''}
+                      onChange={(event) => onSelectTable?.(event.target.value)}
+                      className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-sm text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                    >
+                      {tables.map((table) => (
+                        <option key={table.id} value={table.id}>
+                          {table.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </label>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                    Heimteam
+                    <select
+                      value={form.homeTeam}
+                      onChange={handleChange('homeTeam')}
+                      className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none ring-emerald-500/50 focus:border-emerald-300 focus:ring-2"
+                    >
+                      {TEAM_OPTIONS.map((team) => (
+                        <option key={`home-${team}`}>{team}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                    Auswärtssteam
+                    <select
+                      value={form.awayTeam}
+                      onChange={handleChange('awayTeam')}
+                      className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none ring-orange-500/50 focus:border-orange-300 focus:ring-2"
+                    >
+                      {TEAM_OPTIONS.map((team) => (
+                        <option key={`away-${team}`}>{team}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                    Heim-Tore
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.homeScore}
+                      onChange={handleChange('homeScore')}
+                      className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                      required
+                    />
+                  </label>
+                  <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                    Auswaerts-Tore
+                    <input
+                      type="number"
+                      min="0"
+                      value={form.awayScore}
+                      onChange={handleChange('awayScore')}
+                      className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-orange-300 focus:ring-2 focus:ring-orange-500/40"
+                      required
+                    />
+                  </label>
+                  <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                    Datum
+                    <input
+                      type="date"
+                      value={form.date}
+                      onChange={handleChange('date')}
+                      className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-white/30 focus:ring-2 focus:ring-white/20"
+                      required
+                    />
+                  </label>
+                </div>
+
+                {error ? (
+                  <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+                    {error}
+                  </p>
+                ) : null}
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {saving ? 'Speichern…' : 'Ergebnis speichern'}
+                  </button>
+                </div>
+              </form>
+            </Card>
+          ) : null}
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Card title="Letzte Ergebnisse" kicker="Live Feed" id="results">
+            <div className="space-y-3">
+              {matchDeleteError ? (
+                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+                  {matchDeleteError}
+                </p>
+              ) : null}
+              {latestMatches.length === 0 ? (
+                <p className="text-sm text-slate-300/70">
+                  {selectedTableId ? 'Noch keine Spiele für diese Tabelle.' : 'Bitte zuerst eine Tabelle auswählen.'}
+                </p>
+              ) : (
+                latestMatches.map((match) => {
+                  const isGsh = match.homeTeam === 'Gut Schluck Hauset' || match.awayTeam === 'Gut Schluck Hauset'
+                  return (
+                    <div
+                      key={match.id}
+                      className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${
+                        isGsh
+                          ? 'border-emerald-400/50 bg-emerald-500/10 shadow-lg shadow-emerald-500/20'
+                          : 'border-white/5 bg-white/5'
+                      }`}
+                    >
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          {match.homeTeam} <span className="text-emerald-200">vs</span> {match.awayTeam}
+                        </p>
+                        <p className="text-xs text-slate-300/70">{formatDate(match.date)}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`rounded-full px-3 py-1 text-sm font-semibold ${
+                            isGsh ? 'bg-emerald-500/20 text-emerald-50' : 'bg-slate-900/80 text-emerald-100'
+                          }`}
+                        >
+                          {match.homeScore} : {match.awayScore}
+                        </div>
+                        {isAdmin ? (
+                          <button
+                            type="button"
+                            disabled={deletingMatchId === match.id}
+                            onClick={() => handleDeleteMatch(match.id)}
+                            className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {deletingMatchId === match.id ? '...' : 'Loeschen'}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </Card>
+
+          <Card title="Traineranmerkung" kicker="GSH" id="notes">
+            <div className="space-y-4">
+            {isAdmin ? (
+              <form className="space-y-3" onSubmit={handleNoteSubmit}>
+                <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                  Anmerkung
+                  <textarea
+                    value={noteForm.body}
+                    onChange={handleNoteChange}
+                    className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                    rows="3"
+                    placeholder="Kurz anmerken..."
+                  />
+                </label>
+                {notesError ? (
+                  <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
+                    {notesError}
+                  </p>
+                ) : null}
+                <button
+                  type="submit"
+                  disabled={savingNote}
+                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingNote ? 'Speichert...' : 'Anmerkung speichern'}
+                </button>
+              </form>
+            ) : null}
+
+            <div className="space-y-3">
+              {loadingNotes ? (
+                <p className="text-sm text-slate-300/70">Lade Notizen...</p>
+              ) : notesError ? (
+                <p className="text-sm text-red-200/90">{notesError}</p>
+              ) : notes.length === 0 ? (
+                <p className="text-sm text-slate-300/70">Noch keine Notizen vorhanden.</p>
+              ) : (
+                (() => {
+                  const note = notes[0]
+                  const noteText = note.body || note.text || ''
+                  const wordList = noteText.trim() ? noteText.trim().split(/\s+/) : []
+                  const isLong = wordList.length > 150
+                  const displayText =
+                    isLong && !noteExpanded ? `${wordList.slice(0, 150).join(' ')} ...` : noteText
+                  return (
+                    <div key={note.id} className="rounded-2xl border border-white/5 bg-white/5 p-3">
+                      <p className="text-sm text-slate-200/90">{displayText}</p>
+                      <p className="mt-1 text-[11px] text-slate-300/70">{formatDate(note.createdAt)}</p>
+                      {isLong ? (
+                        <button
+                          type="button"
+                          onClick={() => setNoteExpanded((v) => !v)}
+                          className="mt-2 text-xs font-semibold text-emerald-200 hover:text-emerald-100"
+                        >
+                          {noteExpanded ? 'Weniger anzeigen' : 'Mehr öffnen'}
+                        </button>
+                      ) : null}
+                    </div>
+                  )
+                })()
+              )}
+            </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      <Card title={tableTitle} kicker="Live Ranking" id="standings" className="mt-12">
+        <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+          {[
+            { value: 'all', label: 'All' },
+            { value: 'home', label: 'Home' },
+            { value: 'away', label: 'Away' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setRankingFilter(opt.value)}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${rankingFilter === opt.value
+                  ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-50 shadow shadow-emerald-500/30'
+                  : 'border-white/10 bg-white/5 text-slate-200 hover:border-emerald-300/50 hover:text-emerald-50'
+                }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-left">
+            <thead>
+              <tr className="text-xs uppercase tracking-[0.2em] text-slate-300/70">
+                <th className="py-2 pr-3 font-medium">#</th>
+                <th className="py-2 pr-3 font-medium">Team</th>
+                <th className="py-2 pr-3 font-medium">Sp</th>
+                <th className="py-2 pr-3 font-medium">S</th>
+                <th className="py-2 pr-3 font-medium">U</th>
+                <th className="py-2 pr-3 font-medium">N</th>
+                <th className="py-2 pr-3 font-medium">Tore</th>
+                <th className="py-2 pr-3 font-medium">Diff</th>
+                <th className="py-2 pr-3 font-medium text-right">Pkt</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm">
+              {standingsView.length === 0 ? (
+                <tr>
+                  <td colSpan="9" className="py-4 text-center text-slate-300/70">
+                    Noch keine Daten. Erfasse das erste Ergebnis.
+                  </td>
+                </tr>
+              ) : (
+                standingsView.map((row, idx) => (
+                  <tr key={row.team} className="border-t border-white/5 hover:bg-white/5">
+                    <td className="py-3 pr-3 text-slate-400">{idx + 1}</td>
+                    <td className="py-3 pr-3 font-semibold text-white">{row.team}</td>
+                    <td className="py-3 pr-3">{row.played}</td>
+                    <td className="py-3 pr-3">{row.wins}</td>
+                    <td className="py-3 pr-3">{row.draws}</td>
+                    <td className="py-3 pr-3">{row.losses}</td>
+                    <td className="py-3 pr-3">
+                      {row.gf}:{row.ga}
+                    </td>
+                    <td className="py-3 pr-3">{row.gf - row.ga}</td>
+                    <td className="py-3 pr-3 text-right font-semibold text-emerald-200">{row.points}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </Card>
-
-      </div>
-
-    <Card title="Tabelle 2025" kicker="Live Ranking" id="standings" className="mt-12">
-      <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
-        {[
-          { value: 'all', label: 'All' },
-          { value: 'home', label: 'Home' },
-          { value: 'away', label: 'Away' },
-        ].map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => setRankingFilter(opt.value)}
-            className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
-              rankingFilter === opt.value
-                ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-50 shadow shadow-emerald-500/30'
-                : 'border-white/10 bg-white/5 text-slate-200 hover:border-emerald-300/50 hover:text-emerald-50'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] border-collapse text-left">
-          <thead>
-            <tr className="text-xs uppercase tracking-[0.2em] text-slate-300/70">
-              <th className="py-2 pr-3 font-medium">#</th>
-              <th className="py-2 pr-3 font-medium">Team</th>
-              <th className="py-2 pr-3 font-medium">Sp</th>
-              <th className="py-2 pr-3 font-medium">S</th>
-              <th className="py-2 pr-3 font-medium">U</th>
-              <th className="py-2 pr-3 font-medium">N</th>
-              <th className="py-2 pr-3 font-medium">Tore</th>
-              <th className="py-2 pr-3 font-medium">Diff</th>
-              <th className="py-2 pr-3 font-medium text-right">Pkt</th>
-            </tr>
-          </thead>
-          <tbody className="text-sm">
-            {standingsView.length === 0 ? (
-              <tr>
-                <td colSpan="9" className="py-4 text-center text-slate-300/70">
-                  Noch keine Daten. Erfasse das erste Ergebnis.
-                </td>
-              </tr>
-            ) : (
-              standingsView.map((row, idx) => (
-                <tr key={row.team} className="border-t border-white/5 hover:bg-white/5">
-                  <td className="py-3 pr-3 text-slate-400">{idx + 1}</td>
-                  <td className="py-3 pr-3 font-semibold text-white">{row.team}</td>
-                  <td className="py-3 pr-3">{row.played}</td>
-                  <td className="py-3 pr-3">{row.wins}</td>
-                  <td className="py-3 pr-3">{row.draws}</td>
-                  <td className="py-3 pr-3">{row.losses}</td>
-                  <td className="py-3 pr-3">
-                    {row.gf}:{row.ga}
-                  </td>
-                  <td className="py-3 pr-3">{row.gf - row.ga}</td>
-                  <td className="py-3 pr-3 text-right font-semibold text-emerald-200">{row.points}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </Card>
     </div>
   )
 }
@@ -842,7 +1059,7 @@ const AnfahrtPage = () => (
       <p className="text-slate-300/80">Adresse, Parken und Karte für den schnellsten Weg zum GSH.</p>
     </header>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Card title="Adresse" kicker="Gut Schluck Hauset Sportplatz">
+      <Card title="Adresse" kicker="Gut Schluck Hauset Sportplatz">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="space-y-3">
             <p className="text-sm text-slate-200/90">
@@ -1812,9 +2029,17 @@ const TeamPage = ({ isAdmin }) => {
   )
 }
 
-const PublicTablePage = ({ standings, matches }) => {
+const PublicTablePage = ({ matches, activeTable }) => {
   const [publicFilter, setPublicFilter] = useState('all')
-  const standingsView = useMemo(() => computeStandings(matches, publicFilter), [matches, publicFilter])
+  const publicMatches = useMemo(() => {
+    if (!activeTable) return []
+    return matches.filter((match) => match.tableId === activeTable.id)
+  }, [matches, activeTable])
+  const standingsView = useMemo(
+    () => computeStandings(publicMatches, publicFilter),
+    [publicMatches, publicFilter],
+  )
+  const tableTitle = activeTable ? activeTable.name : 'Tabelle'
 
   return (
     <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
@@ -1822,14 +2047,14 @@ const PublicTablePage = ({ standings, matches }) => {
       <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
       <header className="mb-8">
         <GradientBadge>Spielstand</GradientBadge>
-        <h1 className="mt-3 font-display text-4xl font-semibold text-white">Tabelle</h1>
+        <h1 className="mt-3 font-display text-4xl font-semibold text-white">{tableTitle}</h1>
         <p className="text-slate-300/80">
-          Season 2025 - Gut Schluck Hauset Fussball
+          {activeTable ? `Aktive Tabelle: ${tableTitle}` : 'Aktive Tabelle: -'}
           <br />
           Ergebnisse und Tabelle für alle Fans und Mitglieder
         </p>
       </header>
-      <Card title="Tabelle 2025" kicker="Live Ranking">
+      <Card title={tableTitle} kicker="Live Ranking">
         <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
           {[
             { value: 'all', label: 'All' },
@@ -1840,11 +2065,10 @@ const PublicTablePage = ({ standings, matches }) => {
               key={opt.value}
               type="button"
               onClick={() => setPublicFilter(opt.value)}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
-                publicFilter === opt.value
+              className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${publicFilter === opt.value
                   ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-50 shadow shadow-emerald-500/30'
                   : 'border-white/10 bg-white/5 text-slate-200 hover:border-emerald-300/50 hover:text-emerald-50'
-              }`}
+                }`}
             >
               {opt.label}
             </button>
@@ -1937,7 +2161,7 @@ const LoginPage = ({ user }) => {
           <GradientBadge>Login</GradientBadge>
           <h1 className="mt-3 font-display text-3xl font-semibold text-white">Anmelden</h1>
           <p className="text-slate-300/80">
-            Melde dich mit deiner E-Mail und deinem Passwort an. 
+            Melde dich mit deiner E-Mail und deinem Passwort an.
             <br />
             Nur für Vereinsmitglieder.
           </p>
@@ -2067,6 +2291,10 @@ const SettingsPage = ({ user, onProfileSaved }) => {
 
 const AppShell = () => {
   const [matches, setMatches] = useState([])
+  const [tables, setTables] = useState([])
+  const [loadingTables, setLoadingTables] = useState(true)
+  const [tablesError, setTablesError] = useState('')
+  const [selectedTableId, setSelectedTableId] = useState('')
   const [form, setForm] = useState({
     homeTeam: 'Gut Schluck Hauset',
     awayTeam: 'Gut Schluck Hauset',
@@ -2079,6 +2307,10 @@ const AppShell = () => {
   const [user, setUser] = useState(null)
   const standings = useMemo(() => computeStandings(matches), [matches])
   const navItems = user ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS
+  const activeTable = useMemo(
+    () => tables.find((table) => table.id === selectedTableId) || null,
+    [tables, selectedTableId],
+  )
   const isAdmin = useMemo(() => {
     const email = (user?.email || '').toLowerCase()
     if (!email) return false
@@ -2102,6 +2334,40 @@ const AppShell = () => {
   }, [])
 
   useEffect(() => {
+    const q = query(collection(db, 'tables'), orderBy('createdAt', 'desc'))
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const next = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        setTables(next)
+        setTablesError('')
+        setLoadingTables(false)
+        setSelectedTableId((prev) => {
+          if (prev && next.some((table) => table.id === prev)) return prev
+          const stored = window?.localStorage?.getItem(TABLE_STORAGE_KEY) || ''
+          if (stored && next.some((table) => table.id === stored)) return stored
+          return next[0]?.id || ''
+        })
+      },
+      (err) => {
+        console.error(err)
+        setTablesError('Konnte Tabellen nicht laden.')
+        setLoadingTables(false)
+      },
+    )
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!selectedTableId) return
+    try {
+      window?.localStorage?.setItem(TABLE_STORAGE_KEY, selectedTableId)
+    } catch (err) {
+      console.warn('Konnte Tabellenauswahl nicht speichern.', err)
+    }
+  }, [selectedTableId])
+
+  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => setUser(nextUser))
     return () => unsubscribe()
   }, [])
@@ -2113,6 +2379,10 @@ const AppShell = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
+    if (!selectedTableId) {
+      setError('Bitte zuerst eine Tabelle anlegen oder auswählen.')
+      return
+    }
     if (form.homeTeam === form.awayTeam) {
       setError('Heim- und Auswärtssteam müssen unterschiedlich sein.')
       return
@@ -2126,6 +2396,8 @@ const AppShell = () => {
     setSaving(true)
     try {
       await addDoc(collection(db, 'matches'), {
+        tableId: selectedTableId,
+        tableName: activeTable?.name || null,
         homeTeam: form.homeTeam,
         awayTeam: form.awayTeam,
         homeScore: hs,
@@ -2150,6 +2422,22 @@ const AppShell = () => {
     }
   }
 
+  const handleDeleteTable = async (tableId) => {
+    if (!tableId) return
+    const matchesQuery = query(collection(db, 'matches'), where('tableId', '==', tableId))
+    const snapshot = await getDocs(matchesQuery)
+    await Promise.all(snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref)))
+    await deleteDoc(doc(db, 'tables', tableId))
+    if (selectedTableId === tableId) {
+      setSelectedTableId('')
+      try {
+        window?.localStorage?.removeItem(TABLE_STORAGE_KEY)
+      } catch (err) {
+        console.warn('Konnte Tabellenauswahl nicht entfernen.', err)
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
       <div className="pointer-events-none fixed inset-0 -z-10">
@@ -2163,7 +2451,7 @@ const AppShell = () => {
           path="/"
           element={<HomePage />}
         />
-        <Route path="/tabelle-oeffentlich" element={<PublicTablePage standings={standings} matches={matches} />} />
+        <Route path="/tabelle-oeffentlich" element={<PublicTablePage matches={matches} activeTable={activeTable} />} />
         <Route path="/galerie" element={<GalleryPage isAdmin={isAdmin} />} />
         <Route
           path="/tabelle"
@@ -2171,13 +2459,19 @@ const AppShell = () => {
             <PrivateRoute user={user}>
               <TablePage
                 matches={matches}
-                standings={standings}
                 form={form}
                 handleChange={handleChange}
                 handleSubmit={handleSubmit}
                 saving={saving}
                 error={error}
                 isAdmin={isAdmin}
+                tables={tables}
+                selectedTableId={selectedTableId}
+                onSelectTable={setSelectedTableId}
+                activeTable={activeTable}
+                tablesError={tablesError}
+                loadingTables={loadingTables}
+                onDeleteTable={handleDeleteTable}
               />
             </PrivateRoute>
           }
