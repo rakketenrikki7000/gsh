@@ -283,9 +283,7 @@ const Card = ({ title, kicker, children, id, className = '' }) => (
 
 const SponsorMarquee = () => (
   <div className="mt-8">
-    <div className="relative overflow-hidden rounded-xl bg-slate-950/60 px-6">
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-slate-950 via-slate-950/70 to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-slate-950 via-slate-950/70 to-transparent" />
+    <div className="relative overflow-hidden">
       <div className="flex min-w-[200%] flex-nowrap items-center gap-6 py-4 sponsor-marquee-track">
         {SPONSOR_LOOP.map((logo, idx) => (
           logo.href ? (
@@ -1892,7 +1890,7 @@ const GalleryPage = ({ isAdmin }) => {
   )
 }
 
-const SchedulePage = ({ user, isAdmin }) => {
+const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
   const { t } = useI18n()
   const defaultDate = new Date().toLocaleDateString('sv-SE')
   const defaultHour = new Date().toLocaleTimeString('de-DE', {
@@ -2015,7 +2013,7 @@ const SchedulePage = ({ user, isAdmin }) => {
     setGamesError('')
     setVotingId(gameId)
     try {
-      const displayName = user.displayName || user.email || 'Spieler'
+      const displayName = user.displayName?.trim() || 'Spieler'
       await updateDoc(doc(db, 'schedule', gameId), {
         [`votes.${user.uid}`]: {
           status: value,
@@ -2647,31 +2645,114 @@ const SchedulePage = ({ user, isAdmin }) => {
                       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-50">
                           <p className="font-semibold">Dabei</p>
-                          <p className="mt-1">
+                          <div className="mt-2 flex flex-wrap gap-2">
                             {yesList.length
-                              ? yesList.map((v) => v.name || v.email || 'Spieler').join(', ')
+                              ? yesList.map((v) => {
+                                  const resolvedName =
+                                    v?.email && user?.email && v.email === user.email && user.displayName
+                                      ? user.displayName
+                                      : v?.name
+                                  const label = resolvedName || 'Spieler'
+                                  const match = playerProfiles.find(
+                                    (p) => normalizeName(p?.name) === normalizeName(resolvedName),
+                                  )
+                                  return (
+                                    <span
+                                      key={`${v?.email || v?.name}-${v?.status}`}
+                                      className="inline-flex flex-col items-center gap-1 text-[10px] font-semibold text-emerald-50"
+                                    >
+                                      <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-emerald-400/20 text-xs font-bold text-emerald-50">
+                                        {match?.photo ? (
+                                          <img
+                                            src={match.photo}
+                                            alt={label}
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          (label || '?').slice(0, 1).toUpperCase()
+                                        )}
+                                      </span>
+                                      <span className="max-w-[120px] truncate">{label}</span>
+                                    </span>
+                                  )
+                                })
                               : '—'}
-                          </p>
+                          </div>
                         </div>
                         <div className="space-y-3">
                           <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs text-amber-50">
                             <p className="font-semibold">Vielleicht</p>
-                            <p className="mt-1">
+                            <div className="mt-2 flex flex-wrap gap-2">
                               {values.filter((v) => v?.status === 'maybe').length
                                 ? values
                                     .filter((v) => v?.status === 'maybe')
-                                    .map((v) => v.name || v.email || 'Spieler')
-                                    .join(', ')
+                                    .map((v) => {
+                                      const resolvedName =
+                                        v?.email && user?.email && v.email === user.email && user.displayName
+                                          ? user.displayName
+                                          : v?.name
+                                      const label = resolvedName || 'Spieler'
+                                      const match = playerProfiles.find(
+                                        (p) => normalizeName(p?.name) === normalizeName(resolvedName),
+                                      )
+                                      return (
+                                        <span
+                                          key={`${v?.email || v?.name}-${v?.status}`}
+                                          className="inline-flex flex-col items-center gap-1 text-[10px] font-semibold text-amber-50"
+                                        >
+                                          <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-amber-400/20 text-xs font-bold text-amber-50">
+                                            {match?.photo ? (
+                                              <img
+                                                src={match.photo}
+                                                alt={label}
+                                                className="h-full w-full object-cover"
+                                              />
+                                            ) : (
+                                              (label || '?').slice(0, 1).toUpperCase()
+                                            )}
+                                          </span>
+                                          <span className="max-w-[120px] truncate">{label}</span>
+                                        </span>
+                                      )
+                                    })
                                 : '—'}
-                            </p>
+                            </div>
                           </div>
                           <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-xs text-red-100">
                             <p className="font-semibold">Nicht dabei</p>
-                            <p className="mt-1">
+                            <div className="mt-2 flex flex-wrap gap-2">
                               {noList.length
-                                ? noList.map((v) => v.name || v.email || 'Spieler').join(', ')
+                                ? noList.map((v) => {
+                                    const resolvedName =
+                                      v?.email && user?.email && v.email === user.email && user.displayName
+                                        ? user.displayName
+                                        : v?.name
+                                    const label = resolvedName || 'Spieler'
+                                    const match = playerProfiles.find(
+                                      (p) => normalizeName(p?.name) === normalizeName(resolvedName),
+                                    )
+                                    return (
+                                      <span
+                                        key={`${v?.email || v?.name}-${v?.status}`}
+                                        className="inline-flex flex-col items-center gap-1 text-[10px] font-semibold text-red-100"
+                                      >
+                                        <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-red-400/20 text-xs font-bold text-red-100">
+                                          {match?.photo ? (
+                                            <img
+                                              src={match.photo}
+                                              alt={label}
+                                              className="h-full w-full object-cover"
+                                            />
+                                          ) : (
+                                            (label || '?').slice(0, 1).toUpperCase()
+                                          )}
+                                        </span>
+                                        <span className="max-w-[120px] truncate">{label}</span>
+                                      </span>
+                                    )
+                                  })
                                 : '—'}
-                            </p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -3565,7 +3646,7 @@ const AppShell = () => {
           path="/spielplan"
           element={
             <PrivateRoute user={user}>
-              <SchedulePage user={user} isAdmin={isAdmin} />
+              <SchedulePage user={user} isAdmin={isAdmin} playerProfiles={playerProfiles} />
             </PrivateRoute>
           }
         />
