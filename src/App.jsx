@@ -21,7 +21,6 @@ import {
   serverTimestamp,
   setDoc,
   updateDoc,
-  where,
 } from 'firebase/firestore'
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth'
 import { auth, db } from './firebase'
@@ -709,7 +708,7 @@ const TablePage = ({
 
   const activeMatches = useMemo(() => {
     if (!selectedTableId) return []
-    return matches.filter((match) => match.tableId === selectedTableId)
+    return matches.filter((match) => !match.tableId || match.tableId === selectedTableId)
   }, [matches, selectedTableId])
 
   const latestMatches = useMemo(
@@ -780,10 +779,14 @@ const TablePage = ({
     if (!matchId) return
     const ok = window.confirm('Dieses Ergebnis wirklich löschen?')
     if (!ok) return
+    if (!selectedTableId) {
+      setMatchDeleteError('Bitte zuerst eine Tabelle auswählen.')
+      return
+    }
     setMatchDeleteError('')
     setDeletingMatchId(matchId)
     try {
-      await deleteDoc(doc(db, 'matches', matchId))
+      await deleteDoc(doc(db, 'tables', selectedTableId, 'matches', matchId))
     } catch (err) {
       console.error(err)
       setMatchDeleteError('Konnte Ergebnis nicht löschen.')
@@ -3747,7 +3750,14 @@ const AppShell = () => {
   }, [playerProfiles, user])
 
   useEffect(() => {
-    const q = query(collection(db, 'matches'), orderBy('date', 'desc'))
+    if (!selectedTableId) {
+      setMatches([])
+      return undefined
+    }
+    const q = query(
+      collection(db, 'tables', selectedTableId, 'matches'),
+      orderBy('date', 'desc'),
+    )
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -3760,7 +3770,7 @@ const AppShell = () => {
       },
     )
     return () => unsubscribe()
-  }, [])
+  }, [selectedTableId])
 
   useEffect(() => {
     const q = query(collection(db, 'tables'), orderBy('createdAt', 'desc'))
@@ -3848,7 +3858,7 @@ const AppShell = () => {
     }
     setSaving(true)
     try {
-      await addDoc(collection(db, 'matches'), {
+      await addDoc(collection(db, 'tables', selectedTableId, 'matches'), {
         tableId: selectedTableId,
         tableName: activeTable?.name || null,
         homeTeam: form.homeTeam,
@@ -3877,7 +3887,7 @@ const AppShell = () => {
 
   const handleDeleteTable = async (tableId) => {
     if (!tableId) return
-    const matchesQuery = query(collection(db, 'matches'), where('tableId', '==', tableId))
+    const matchesQuery = query(collection(db, 'tables', tableId, 'matches'))
     const snapshot = await getDocs(matchesQuery)
     await Promise.all(snapshot.docs.map((docSnap) => deleteDoc(docSnap.ref)))
     await deleteDoc(doc(db, 'tables', tableId))
