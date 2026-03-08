@@ -1892,6 +1892,10 @@ const GalleryPage = ({ isAdmin }) => {
 
 const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
   const { t } = useI18n()
+  const [openLineupGameId, setOpenLineupGameId] = useState('')
+  const [lineupFormationByGame, setLineupFormationByGame] = useState({})
+  const [lineupAssignmentsByGame, setLineupAssignmentsByGame] = useState({})
+  const [selectedLineupPlayerByGame, setSelectedLineupPlayerByGame] = useState({})
   const defaultDate = new Date().toLocaleDateString('sv-SE')
   const defaultHour = new Date().toLocaleTimeString('de-DE', {
     hour: '2-digit',
@@ -2028,6 +2032,109 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
     } finally {
       setVotingId('')
     }
+  }
+
+  const formationOptions = [
+    { value: '4-3-3', label: '4-3-3' },
+    { value: '4-4-2', label: '4-4-2' },
+    { value: '4-3-1-2', label: '4-3-1-2' },
+    { value: '3-4-2-1', label: '3-4-2-1' },
+    { value: '4-1-4-1', label: '4-1-4-1' },
+    { value: '4-5-1', label: '4-5-1' },
+  ]
+
+  const normalizeFormation = (formation) => {
+    if (!formation) return '4-4-2'
+    return formation.startsWith('1-') ? formation.slice(2) : formation
+  }
+
+  const formationSlots = (formation) => {
+    const base = {
+      '4-4-2': ['GK', 'LB', 'LCB', 'RCB', 'RB', 'LM', 'LCM', 'RCM', 'RM', 'LS', 'RS'],
+      '4-3-3': ['GK', 'LB', 'LCB', 'RCB', 'RB', 'LCM', 'CM', 'RCM', 'LW', 'ST', 'RW'],
+      '4-3-1-2': ['GK', 'LB', 'LCB', 'RCB', 'RB', 'LCM', 'CM', 'RCM', 'CAM', 'LS', 'RS'],
+      '3-4-2-1': ['GK', 'LCB', 'CB', 'RCB', 'LM', 'LCM', 'RCM', 'RM', 'LAM', 'RAM', 'ST'],
+      '4-1-4-1': ['GK', 'LB', 'LCB', 'RCB', 'RB', 'CDM', 'LM', 'LCM', 'RCM', 'RM', 'ST'],
+      '4-5-1': ['GK', 'LB', 'LCB', 'RCB', 'RB', 'LM', 'LCM', 'CM', 'RCM', 'RM', 'ST'],
+    }
+    const key = normalizeFormation(formation)
+    return base[key] || base['4-4-2']
+  }
+
+  const formationLayout = (formation) => {
+    const key = normalizeFormation(formation)
+    const slots = formationSlots(key)
+    const layouts = {
+      '4-4-2': [
+        { x: 50, y: 88 }, // GK
+        { x: 15, y: 70 }, { x: 38, y: 70 }, { x: 62, y: 70 }, { x: 85, y: 70 }, // DEF
+        { x: 15, y: 48 }, { x: 38, y: 48 }, { x: 62, y: 48 }, { x: 85, y: 48 }, // MID
+        { x: 38, y: 26 }, { x: 62, y: 26 }, // ST
+      ],
+      '4-3-3': [
+        { x: 50, y: 88 },
+        { x: 15, y: 70 }, { x: 38, y: 70 }, { x: 62, y: 70 }, { x: 85, y: 70 },
+        { x: 30, y: 50 }, { x: 50, y: 46 }, { x: 70, y: 50 },
+        { x: 18, y: 24 }, { x: 50, y: 18 }, { x: 82, y: 24 },
+      ],
+      '4-3-1-2': [
+        { x: 50, y: 88 },
+        { x: 15, y: 70 }, { x: 38, y: 70 }, { x: 62, y: 70 }, { x: 85, y: 70 },
+        { x: 30, y: 52 }, { x: 50, y: 48 }, { x: 70, y: 52 },
+        { x: 50, y: 34 },
+        { x: 38, y: 20 }, { x: 62, y: 20 },
+      ],
+      '3-4-2-1': [
+        { x: 50, y: 88 },
+        { x: 25, y: 70 }, { x: 50, y: 70 }, { x: 75, y: 70 },
+        { x: 15, y: 52 }, { x: 35, y: 52 }, { x: 65, y: 52 }, { x: 85, y: 52 },
+        { x: 35, y: 32 }, { x: 65, y: 32 },
+        { x: 50, y: 16 },
+      ],
+      '4-1-4-1': [
+        { x: 50, y: 88 },
+        { x: 15, y: 70 }, { x: 38, y: 70 }, { x: 62, y: 70 }, { x: 85, y: 70 },
+        { x: 50, y: 56 },
+        { x: 15, y: 44 }, { x: 38, y: 44 }, { x: 62, y: 44 }, { x: 85, y: 44 },
+        { x: 50, y: 20 },
+      ],
+      '4-5-1': [
+        { x: 50, y: 88 },
+        { x: 15, y: 70 }, { x: 38, y: 70 }, { x: 62, y: 70 }, { x: 85, y: 70 },
+        { x: 12, y: 48 }, { x: 32, y: 48 }, { x: 50, y: 44 }, { x: 68, y: 48 }, { x: 88, y: 48 },
+        { x: 50, y: 20 },
+      ],
+    }
+    const coords = layouts[key] || layouts['4-4-2']
+    return slots.map((slot, idx) => ({ slot, ...coords[idx] }))
+  }
+
+  const getLineupFormation = (gameId) =>
+    normalizeFormation(lineupFormationByGame[gameId]) || '4-4-2'
+
+  const getLineupAssignments = (gameId) => lineupAssignmentsByGame[gameId] || {}
+
+  const setLineupAssignment = (gameId, slot, playerKey) => {
+    setLineupAssignmentsByGame((prev) => ({
+      ...prev,
+      [gameId]: {
+        ...(prev[gameId] || {}),
+        [slot]: playerKey,
+      },
+    }))
+  }
+
+  const clearLineupAssignment = (gameId, slot) => {
+    setLineupAssignmentsByGame((prev) => {
+      const next = { ...(prev[gameId] || {}) }
+      delete next[slot]
+      return { ...prev, [gameId]: next }
+    })
+  }
+
+  const getSelectedLineupPlayer = (gameId) => selectedLineupPlayerByGame[gameId] || ''
+  const setSelectedLineupPlayer = (gameId, playerKey) => {
+    setSelectedLineupPlayerByGame((prev) => ({ ...prev, [gameId]: playerKey || '' }))
   }
 
   const getGameDateTime = (game) => {
@@ -2644,7 +2751,15 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                     {isAdmin ? (
                       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-xs text-emerald-50">
-                          <p className="font-semibold">Dabei</p>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenLineupGameId((prev) => (prev === game.id ? '' : game.id))
+                            }
+                            className="text-left font-semibold text-emerald-50"
+                          >
+                            Dabei
+                          </button>
                           <div className="mt-2 flex flex-wrap gap-2">
                             {yesList.length
                               ? yesList.map((v) => {
@@ -2752,6 +2867,186 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                                     )
                                   })
                                 : '—'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {isAdmin && openLineupGameId === game.id ? (
+                      <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+                        <div className="grid gap-4 lg:grid-cols-[1fr_2fr_1fr] lg:items-start">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/70">
+                              Spieler (Dabei)
+                            </p>
+                            <div className="mt-2 grid grid-cols-1 gap-3">
+                              {(() => {
+                                const assignedKeys = new Set(
+                                  Object.values(getLineupAssignments(game.id) || {}).filter(Boolean),
+                                )
+                                const availablePlayers = yesList.filter((v) => {
+                                  const key = (v?.email || v?.name || '').toLowerCase()
+                                  return key && !assignedKeys.has(key)
+                                })
+                                return availablePlayers.length ? (
+                                  availablePlayers.map((v) => {
+                                    const name = v?.name || v?.email || 'Spieler'
+                                    const match = playerProfiles.find(
+                                      (p) => normalizeName(p?.name) === normalizeName(name),
+                                    )
+                                    const key = (v?.email || v?.name || '').toLowerCase()
+                                  return (
+                                    <button
+                                      key={key}
+                                      draggable
+                                      onDragStart={(e) => {
+                                        e.dataTransfer.setData('text/plain', key)
+                                      }}
+                                      type="button"
+                                      onClick={() =>
+                                        setSelectedLineupPlayer(
+                                          game.id,
+                                          getSelectedLineupPlayer(game.id) === key ? '' : key,
+                                        )
+                                      }
+                                      className={`flex flex-col items-center gap-1 px-3 py-2 text-xs font-semibold text-white ${
+                                        getSelectedLineupPlayer(game.id) === key
+                                          ? 'rounded-lg border border-emerald-400/60 bg-emerald-500/10'
+                                          : ''
+                                      }`}
+                                    >
+                                      <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-emerald-400/20 text-[10px] font-bold text-emerald-50">
+                                        {match?.photo ? (
+                                          <img
+                                            src={match.photo}
+                                            alt={name}
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          name.slice(0, 1).toUpperCase()
+                                        )}
+                                      </span>
+                                      <span className="max-w-[180px] truncate">{name}</span>
+                                    </button>
+                                  )
+                                })
+                                ) : (
+                                  <p className="text-xs text-slate-400">Keine Zusagen.</p>
+                                )
+                              })()}
+                            </div>
+                          </div>
+
+                          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/5 p-4">
+                          <div className="relative mx-auto w-full max-w-full overflow-hidden rounded-2xl border border-transparent bg-transparent p-0 sm:max-w-4xl sm:border-emerald-400/20 sm:bg-[radial-gradient(circle_at_50%_20%,rgba(16,185,129,0.25),transparent_45%),linear-gradient(180deg,rgba(15,23,42,0.6),rgba(15,23,42,0.9))] sm:p-3">
+                            <div className="relative aspect-[2/3] w-full rounded-xl border border-white/10 bg-[radial-gradient(circle_at_50%_50%,rgba(16,185,129,0.12),transparent_55%),linear-gradient(180deg,rgba(3,105,80,0.25),rgba(2,44,34,0.5))]">
+                              <div className="absolute inset-1 rounded-lg border-[2px] border-emerald-200/50 sm:border-[3px]" />
+                              <div className="absolute left-1 top-1 h-10 w-10 rounded-br-full border-b-[3px] border-r-[3px] border-emerald-200/45 hidden sm:block" />
+                              <div className="absolute right-1 top-1 h-10 w-10 rounded-bl-full border-b-[3px] border-l-[3px] border-emerald-200/45 hidden sm:block" />
+                              <div className="absolute left-1 bottom-1 h-10 w-10 rounded-tr-full border-t-[3px] border-r-[3px] border-emerald-200/45 hidden sm:block" />
+                              <div className="absolute right-1 bottom-1 h-10 w-10 rounded-tl-full border-t-[3px] border-l-[3px] border-emerald-200/45 hidden sm:block" />
+                              <div className="absolute left-1/2 top-1/2 w-[42%] -translate-x-1/2 -translate-y-1/2 aspect-square rounded-full border-[2px] border-emerald-200/45 sm:h-72 sm:w-72 sm:border-[3px]" />
+                              <div className="absolute left-0 top-1/2 h-[2px] w-full -translate-y-1/2 bg-emerald-200/45 sm:h-[3px]" />
+                              <div className="absolute left-1/2 top-1 h-[12%] w-[36%] -translate-x-1/2 rounded-b-lg border-[2px] border-emerald-200/45 sm:h-28 sm:w-56 sm:border-[3px]" />
+                              <div className="absolute left-1/2 bottom-1 h-[12%] w-[36%] -translate-x-1/2 rounded-t-lg border-[2px] border-emerald-200/45 sm:h-28 sm:w-56 sm:border-[3px]" />
+                              <div className="absolute left-1/2 top-1 h-[26%] w-[70%] -translate-x-1/2 rounded-b-xl border-[2px] border-emerald-200/45 sm:h-56 sm:w-[24rem] sm:border-[3px]" />
+                              <div className="absolute left-1/2 bottom-1 h-[26%] w-[70%] -translate-x-1/2 rounded-t-xl border-[2px] border-emerald-200/45 sm:h-56 sm:w-[24rem] sm:border-[3px]" />
+
+                              <div className="absolute left-1/2 top-[18%] h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-emerald-200/80 sm:top-[11%]" />
+                              <div className="absolute left-1/2 bottom-[18%] h-2.5 w-2.5 -translate-x-1/2 rounded-full bg-emerald-200/80 sm:bottom-[11%]" />
+                              <div className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-200/80" />
+                              {formationLayout(getLineupFormation(game.id)).map(({ slot, x, y }) => {
+                              const assigned = getLineupAssignments(game.id)[slot]
+                              const assignedPlayer = yesList.find(
+                                (v) =>
+                                  (v?.email || v?.name || '').toLowerCase() ===
+                                  (assigned || '').toLowerCase(),
+                              )
+                              const assignedName =
+                                assignedPlayer?.name || assignedPlayer?.email || assigned || ''
+                              const match = playerProfiles.find(
+                                (p) => normalizeName(p?.name) === normalizeName(assignedName),
+                              )
+                              return (
+                                <div
+                                  key={slot}
+                                  onDragOver={(e) => e.preventDefault()}
+                                  onDrop={(e) => {
+                                    e.preventDefault()
+                                    const key = e.dataTransfer.getData('text/plain')
+                                    if (key) setLineupAssignment(game.id, slot, key)
+                                  }}
+                                  onClick={() => {
+                                    const selected = getSelectedLineupPlayer(game.id)
+                                    if (selected) {
+                                      setLineupAssignment(game.id, slot, selected)
+                                      setSelectedLineupPlayer(game.id, '')
+                                    }
+                                  }}
+                                  style={{ left: `${x}%`, top: `${y}%` }}
+                                  className="absolute -translate-x-1/2 -translate-y-1/2 text-center text-[10px] text-slate-200"
+                                >
+                                  <div className="flex flex-col items-center gap-1">
+                                    <span className="text-[9px] uppercase tracking-[0.2em] text-emerald-200/70">
+                                      {slot}
+                                    </span>
+                                    {assignedName ? (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          clearLineupAssignment(game.id, slot)
+                                        }}
+                                        className="inline-flex flex-col items-center gap-1 text-[10px] text-white"
+                                      >
+                                        <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-emerald-400/20 text-[10px] font-bold text-emerald-50">
+                                          {match?.photo ? (
+                                            <img
+                                              src={match.photo}
+                                              alt={assignedName}
+                                              className="h-full w-full object-cover"
+                                            />
+                                          ) : (
+                                            assignedName.slice(0, 1).toUpperCase()
+                                          )}
+                                        </span>
+                                        <span className="max-w-[90px] truncate">{assignedName}</span>
+                                      </button>
+                                    ) : (
+                                      <span className="text-[9px] text-slate-400">Leer</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                            </div>
+                          </div>
+                        </div>
+                          <div className="flex flex-col items-start gap-2 lg:items-end">
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/70">
+                              Formation
+                            </p>
+                            <div className="flex flex-wrap gap-3 lg:flex-col">
+                              {formationOptions.map((opt) => (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() =>
+                                    setLineupFormationByGame((prev) => ({
+                                      ...prev,
+                                      [game.id]: opt.value,
+                                    }))
+                                  }
+                                  className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                                    getLineupFormation(game.id) === opt.value
+                                      ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-50'
+                                      : 'border-white/10 bg-white/5 text-slate-200 hover:border-emerald-300/50'
+                                  }`}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
                             </div>
                           </div>
                         </div>
