@@ -23,7 +23,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore'
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth'
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth'
 import { auth, db } from './firebase'
 
 const TEAM_OPTIONS = [
@@ -72,7 +72,7 @@ const SPONSOR_LOGOS = [
 const SPONSOR_LOOP = [...SPONSOR_LOGOS, ...SPONSOR_LOGOS, ...SPONSOR_LOGOS, ...SPONSOR_LOGOS]
 
 const PUBLIC_NAV_ITEMS = [
-  { to: '/', label: 'Start' },
+  { to: '/', label: 'Home' },
   { to: '/news', label: 'News' },
   { to: '/tabelle-oeffentlich', label: 'Tabelle' },
   { to: '/galerie', label: 'Galerie' },
@@ -81,7 +81,7 @@ const PUBLIC_NAV_ITEMS = [
 ]
 
 const PRIVATE_NAV_ITEMS = [
-  { to: '/', label: 'Start' },
+  { to: '/', label: 'Home' },
   { to: '/news', label: 'News' },
   { to: '/tabelle', label: 'Tabelle' },
   { to: '/spielplan', label: 'Spielplan' },
@@ -96,6 +96,94 @@ const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || '')
   .map((v) => v.trim().toLowerCase())
   .filter(Boolean)
 
+const I18N_DE = {
+  nav_table: 'Tabelle',
+  results_badge: 'Ergebnisse & Tabelle',
+  results_title: 'Spielstände und Ranking',
+  results_subtitle: 'Checke die aktuelle Tabelle und sieh dir den Live-Feed an',
+  news_badge: 'News & Updates',
+  news_title: 'Aktuelles aus dem Verein',
+  news_subtitle: 'Berichte, Ankuendigungen und Stories rund um Gut Schluck Hauset.',
+  news_read_more: 'Mehr lesen',
+  admin_manage_tables: 'Tabellen verwalten',
+  admin_active_table: 'Aktive Tabelle',
+  admin_loading_tables: 'Lade Tabellen...',
+  admin_no_table: 'Noch keine Tabelle vorhanden.',
+  admin_delete_table: 'Tabelle loeschen',
+  admin_new_table: 'Neue Tabelle',
+  admin_table_name: 'Name',
+  admin_table_placeholder: 'z.B. Saison 2026',
+  admin_create_table: 'Tabelle erstellen',
+  admin_creating: 'Erstellt...',
+  workflow_results: 'Ergebnis erfassen',
+  workflow_table: 'Tabelle',
+  workflow_no_table: 'Noch keine Tabelle vorhanden. Bitte zuerst eine Tabelle anlegen.',
+  workflow_home: 'Heimteam',
+  workflow_away: 'Auswärtssteam',
+  workflow_home_score: 'Heim-Tore',
+  workflow_away_score: 'Auswaerts-Tore',
+  workflow_date: 'Datum',
+  workflow_save: 'Ergebnis speichern',
+  workflow_saving: 'Speichern…',
+  live_feed: 'Letzte Ergebnisse',
+  live_feed_empty: 'Noch keine Spiele für diese Tabelle.',
+  live_feed_select: 'Bitte zuerst eine Tabelle auswählen.',
+  live_feed_delete: 'Loeschen',
+  notes_title: 'Traineranmerkung',
+  notes_label: 'Anmerkung',
+  notes_placeholder: 'Kurz anmerken...',
+  notes_save: 'Anmerkung speichern',
+  notes_saving: 'Speichert...',
+  notes_loading: 'Lade Notizen...',
+  notes_empty: 'Noch keine Notizen vorhanden.',
+  notes_more: 'Mehr öffnen',
+  notes_less: 'Weniger anzeigen',
+  public_badge: 'Spielstand',
+  public_subtitle: 'Ergebnisse und Tabelle für alle Fans und Mitglieder',
+  public_filter_all: 'All',
+  public_filter_home: 'Home',
+  public_filter_away: 'Away',
+  public_no_data: 'Noch keine Daten. Erfasse das erste Ergebnis im privaten Bereich.',
+  gallery_badge: 'Galerie',
+  gallery_title: 'Momentes & Events',
+  gallery_create_event: 'Event anlegen',
+  gallery_new: 'Neues',
+  gallery_event_name: 'Event Name',
+  gallery_event_placeholder: 'z.B. Derby 2025',
+  gallery_create: 'Event erstellen',
+  gallery_creating: 'Legt an...',
+  gallery_upload: 'Bilder hochladen',
+  gallery_upload_kicker: 'Upload',
+  gallery_select_event: 'Event Auswahl',
+  gallery_select_placeholder: 'Event waehlen...',
+  gallery_images: 'Bilder',
+  gallery_selected: 'Ausgewaehlt',
+  gallery_file_hint: 'PNG oder JPG, mehrere Dateien möglich.',
+  gallery_save_images: 'Bilder speichern',
+  gallery_uploading: 'Laedt hoch...',
+  gallery_back: 'Zurück zu Events',
+  gallery_save: 'Speichern',
+  gallery_deleting: 'Löscht...',
+  gallery_delete: 'Event löschen',
+  schedule_badge: 'Spielplan',
+  schedule_title: 'Spiele & Zusagen',
+  schedule_subtitle: 'Nur für angemeldete Spieler und Admins.',
+  team_badge: 'Mannschaft',
+  team_title: 'Gut Schluck Hauset',
+  login_badge: 'Login',
+  login_title: 'Anmelden',
+  login_subtitle: 'Melde dich mit deiner E-Mail und deinem Passwort an.',
+  login_members: 'Nur für Vereinsmitglieder.',
+  login_email: 'E-Mail',
+  login_password: 'Passwort',
+  login_button: 'Anmelden',
+  login_loading: 'Anmeldung läuft...',
+}
+
+const useI18n = () => ({
+  t: (key) => I18N_DE[key] || key,
+})
+
 const TABLE_STORAGE_KEY = 'gsh-active-table'
 
 const formatDate = (value) => {
@@ -104,6 +192,13 @@ const formatDate = (value) => {
   const parsed = new Date(value)
   return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleDateString('de-DE')
 }
+
+const normalizeName = (value) =>
+  (value || '')
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
 
 const computeStandings = (matches, mode = 'all') => {
   const table = {}
@@ -257,7 +352,7 @@ const PlayerCard = ({ player }) => {
   )
 }
 
-const TopNav = ({ user, onLogout, navItems }) => {
+const TopNav = ({ user, userAvatar, onLogout, navItems }) => {
   const [open, setOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
@@ -290,8 +385,8 @@ const TopNav = ({ user, onLogout, navItems }) => {
         <button
           className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:border-emerald-300/60 hover:text-emerald-100 md:hidden"
           onClick={() => setOpen((v) => !v)}
+          aria-label="Menue"
         >
-          Menue
           <span className="text-lg">{open ? 'X' : '|||'}</span>
         </button>
 
@@ -317,32 +412,94 @@ const TopNav = ({ user, onLogout, navItems }) => {
           ))}
           <div className="flex flex-col gap-2 md:ml-3 md:flex-row md:items-center">
             {user ? (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setMenuOpen((v) => !v)}
-                  className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20"
-                  aria-label="ProfilMenue"
-                >
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-orange-400 text-sm font-bold text-slate-900">
-                    {(user.displayName || user.email || '?').slice(0, 1).toUpperCase()}
-                  </span>
-                </button>
-                {menuOpen ? (
-                  <div className="absolute right-0 mt-2 w-40 rounded-2xl border border-white/10 bg-slate-900/95 p-2 shadow-lg shadow-emerald-500/20">
-                    <button
-                      className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10"
-                      onClick={() => {
-                        onLogout?.()
-                        setMenuOpen(false)
-                        setOpen(false)
-                      }}
-                    >
-                      Abmelden
-                    </button>
-                  </div>
-                ) : null}
-              </div>
+              <>
+                <div className="flex items-center gap-2 md:hidden">
+                  <button
+                    type="button"
+                    onClick={() => setMenuOpen((v) => !v)}
+                    className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-emerald-500 to-orange-400 text-sm font-bold text-slate-900"
+                    aria-label="ProfilMenue"
+                  >
+                    {userAvatar ? (
+                      <img
+                        src={userAvatar}
+                        alt={user.displayName || user.email || 'Profil'}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      (user.displayName || user.email || '?').slice(0, 1).toUpperCase()
+                    )}
+                  </button>
+                  {menuOpen ? (
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to="/einstellungen"
+                        className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:border-emerald-300/50 hover:text-emerald-50"
+                        onClick={() => {
+                          setMenuOpen(false)
+                          setOpen(false)
+                        }}
+                      >
+                        Einstellungen
+                      </Link>
+                      <button
+                        className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                        onClick={() => {
+                          onLogout?.()
+                          setMenuOpen(false)
+                          setOpen(false)
+                        }}
+                      >
+                        Abmelden
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="relative hidden md:block">
+                  <button
+                    type="button"
+                    onClick={() => setMenuOpen((v) => !v)}
+                    className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20"
+                    aria-label="ProfilMenue"
+                  >
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-orange-400 text-sm font-bold text-slate-900">
+                      {userAvatar ? (
+                        <img
+                          src={userAvatar}
+                          alt={user.displayName || user.email || 'Profil'}
+                          className="h-full w-full rounded-full object-cover"
+                        />
+                      ) : (
+                        (user.displayName || user.email || '?').slice(0, 1).toUpperCase()
+                      )}
+                    </span>
+                  </button>
+                  {menuOpen ? (
+                    <div className="absolute right-0 mt-2 w-40 rounded-2xl border border-white/10 bg-slate-900/95 p-2 shadow-lg shadow-emerald-500/20">
+                      <Link
+                        to="/einstellungen"
+                        className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10"
+                        onClick={() => {
+                          setMenuOpen(false)
+                          setOpen(false)
+                        }}
+                      >
+                        Einstellungen
+                      </Link>
+                      <button
+                        className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-white transition hover:bg-white/10"
+                        onClick={() => {
+                          onLogout?.()
+                          setMenuOpen(false)
+                          setOpen(false)
+                        }}
+                      >
+                        Abmelden
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </>
             ) : (
               <Link
                 to="/login"
@@ -487,14 +644,16 @@ const newsItems = [
   },
 ]
 
-const NewsPage = () => (
+const NewsPage = () => {
+  const { t } = useI18n()
+  return (
   <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
     <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
     <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-orange-500/15 via-transparent to-transparent blur-3xl" />
     <header className="mb-8">
-      <GradientBadge>News & Updates</GradientBadge>
-      <h1 className="mt-3 font-display text-4xl font-semibold text-white">Aktuelles aus dem Verein</h1>
-      <p className="text-slate-300/80">Berichte, Ankuendigungen und Stories rund um Gut Schluck Hauset.</p>
+      <GradientBadge>{t('news_badge')}</GradientBadge>
+      <h1 className="mt-3 font-display text-4xl font-semibold text-white">{t('news_title')}</h1>
+      <p className="text-slate-300/80">{t('news_subtitle')}</p>
     </header>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       {newsItems.map((item) => (
@@ -502,13 +661,14 @@ const NewsPage = () => (
           <p className="text-xs text-slate-400">{formatDate(item.date)}</p>
           <p className="mt-2 text-sm text-slate-200/90">{item.body}</p>
           <button className="mt-4 inline-flex items-center justify-center rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:border-emerald-300/60 hover:text-emerald-100">
-            Mehr lesen
+            {t('news_read_more')}
           </button>
         </Card>
       ))}
     </div>
   </div>
 )
+}
 
 const TablePage = ({
   matches,
@@ -526,6 +686,7 @@ const TablePage = ({
   loadingTables,
   onDeleteTable,
 }) => {
+  const { t } = useI18n()
   const toTime = (value) => {
     if (!value) return 0
     if (value?.toDate) return value.toDate().getTime()
@@ -565,7 +726,7 @@ const TablePage = ({
     () => computeStandings(activeMatches, rankingFilter),
     [activeMatches, rankingFilter],
   )
-  const tableTitle = activeTable ? activeTable.name : 'Tabelle'
+  const tableTitle = activeTable ? activeTable.name : t('nav_table')
 
   const handleNoteChange = (event) => {
     setNoteForm({ body: event.target.value })
@@ -679,27 +840,27 @@ const TablePage = ({
       <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
       <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
       <header className="mb-8">
-        <GradientBadge>Ergebnisse & Tabelle</GradientBadge>
-        <h1 className="mt-3 font-display text-4xl font-semibold text-white">Spielstände und Ranking</h1>
-        <p className="text-slate-300/80">
-          Checke die aktuelle Tabelle und sieh dir den Live-Feed an
-        </p>
+        <GradientBadge>{t('results_badge')}</GradientBadge>
+        <h1 className="mt-3 font-display text-4xl font-semibold text-white">{t('results_title')}</h1>
+        <p className="text-slate-300/80">{t('results_subtitle')}</p>
       </header>
 
       <div className="space-y-6" id="report">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {isAdmin ? (
-            <Card title="Tabellen verwalten" kicker="Admin">
+            <Card title={t('admin_manage_tables')} kicker="Admin">
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/70">Aktive Tabelle</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/70">
+                    {t('admin_active_table')}
+                  </p>
                   <div className="mt-2">
                     {loadingTables ? (
-                      <p className="text-sm text-slate-300/70">Lade Tabellen...</p>
+                      <p className="text-sm text-slate-300/70">{t('admin_loading_tables')}</p>
                     ) : tablesError ? (
                       <p className="text-sm text-red-200/90">{tablesError}</p>
                     ) : tables.length === 0 ? (
-                      <p className="text-sm text-slate-300/70">Noch keine Tabelle vorhanden.</p>
+                      <p className="text-sm text-slate-300/70">{t('admin_no_table')}</p>
                     ) : (
                       <select
                         value={selectedTableId || ''}
@@ -721,23 +882,23 @@ const TablePage = ({
                       onClick={() => handleDeleteTable(selectedTableId, activeTable.name)}
                       className="mt-3 inline-flex items-center justify-center rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {deletingTableId === selectedTableId ? 'Loesche...' : 'Tabelle loeschen'}
+                      {deletingTableId === selectedTableId ? 'Loesche...' : t('admin_delete_table')}
                     </button>
                   ) : null}
                 </div>
 
                 <form className="space-y-3" onSubmit={handleCreateTable}>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/70">
-                    Neue Tabelle
+                    {t('admin_new_table')}
                   </p>
                   <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                    Name
+                    {t('admin_table_name')}
                     <input
                       type="text"
                       value={tableForm.name}
                       onChange={handleTableField('name')}
                       className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
-                      placeholder="z.B. Saison 2026"
+                      placeholder={t('admin_table_placeholder')}
                     />
                   </label>
                   {tableCreateError ? (
@@ -755,7 +916,7 @@ const TablePage = ({
                     disabled={creatingTable}
                     className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {creatingTable ? 'Erstellt...' : 'Tabelle erstellen'}
+                    {creatingTable ? t('admin_creating') : t('admin_create_table')}
                   </button>
                 </form>
               </div>
@@ -763,13 +924,13 @@ const TablePage = ({
           ) : null}
 
           {isAdmin ? (
-            <Card title="Ergebnis erfassen" kicker="Workflow">
+            <Card title={t('workflow_results')} kicker="Workflow">
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                  Tabelle
+                  {t('workflow_table')}
                   {tables.length === 0 ? (
                     <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-100">
-                      Noch keine Tabelle vorhanden. Bitte zuerst eine Tabelle anlegen.
+                      {t('workflow_no_table')}
                     </div>
                   ) : (
                     <select
@@ -787,7 +948,7 @@ const TablePage = ({
                 </label>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                    Heimteam
+                    {t('workflow_home')}
                     <select
                       value={form.homeTeam}
                       onChange={handleChange('homeTeam')}
@@ -799,7 +960,7 @@ const TablePage = ({
                     </select>
                   </label>
                   <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                    Auswärtssteam
+                    {t('workflow_away')}
                     <select
                       value={form.awayTeam}
                       onChange={handleChange('awayTeam')}
@@ -814,7 +975,7 @@ const TablePage = ({
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                    Heim-Tore
+                    {t('workflow_home_score')}
                     <input
                       type="number"
                       min="0"
@@ -825,7 +986,7 @@ const TablePage = ({
                     />
                   </label>
                   <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                    Auswaerts-Tore
+                    {t('workflow_away_score')}
                     <input
                       type="number"
                       min="0"
@@ -836,7 +997,7 @@ const TablePage = ({
                     />
                   </label>
                   <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                    Datum
+                    {t('workflow_date')}
                     <input
                       type="date"
                       value={form.date}
@@ -859,7 +1020,7 @@ const TablePage = ({
                     disabled={saving}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {saving ? 'Speichern…' : 'Ergebnis speichern'}
+                    {saving ? t('workflow_saving') : t('workflow_save')}
                   </button>
                 </div>
               </form>
@@ -868,7 +1029,7 @@ const TablePage = ({
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Card title="Letzte Ergebnisse" kicker="Live Feed" id="results">
+          <Card title={t('live_feed')} kicker="Live Feed" id="results">
             <div className="space-y-3">
               {matchDeleteError ? (
                 <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
@@ -877,7 +1038,7 @@ const TablePage = ({
               ) : null}
               {latestMatches.length === 0 ? (
                 <p className="text-sm text-slate-300/70">
-                  {selectedTableId ? 'Noch keine Spiele für diese Tabelle.' : 'Bitte zuerst eine Tabelle auswählen.'}
+                  {selectedTableId ? t('live_feed_empty') : t('live_feed_select')}
                 </p>
               ) : (
                 latestMatches.map((match) => {
@@ -897,13 +1058,15 @@ const TablePage = ({
                         </p>
                         <p className="text-xs text-slate-300/70">{formatDate(match.date)}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
                         <div
-                          className={`rounded-full px-3 py-1 text-sm font-semibold ${
+                          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
                             isGsh ? 'bg-emerald-500/20 text-emerald-50' : 'bg-slate-900/80 text-emerald-100'
                           }`}
                         >
-                          {match.homeScore} : {match.awayScore}
+                          <span>{match.homeScore}</span>
+                          <span>:</span>
+                          <span>{match.awayScore}</span>
                         </div>
                         {isAdmin ? (
                           <button
@@ -912,7 +1075,7 @@ const TablePage = ({
                             onClick={() => handleDeleteMatch(match.id)}
                             className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {deletingMatchId === match.id ? '...' : 'Loeschen'}
+                            {deletingMatchId === match.id ? '...' : t('live_feed_delete')}
                           </button>
                         ) : null}
                       </div>
@@ -923,18 +1086,18 @@ const TablePage = ({
             </div>
           </Card>
 
-          <Card title="Traineranmerkung" kicker="GSH" id="notes">
+          <Card title={t('notes_title')} kicker="GSH" id="notes">
             <div className="space-y-4">
             {isAdmin ? (
               <form className="space-y-3" onSubmit={handleNoteSubmit}>
                 <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                  Anmerkung
+                  {t('notes_label')}
                   <textarea
                     value={noteForm.body}
                     onChange={handleNoteChange}
                     className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
                     rows="3"
-                    placeholder="Kurz anmerken..."
+                    placeholder={t('notes_placeholder')}
                   />
                 </label>
                 {notesError ? (
@@ -947,18 +1110,18 @@ const TablePage = ({
                   disabled={savingNote}
                   className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {savingNote ? 'Speichert...' : 'Anmerkung speichern'}
+                  {savingNote ? t('notes_saving') : t('notes_save')}
                 </button>
               </form>
             ) : null}
 
             <div className="space-y-3">
               {loadingNotes ? (
-                <p className="text-sm text-slate-300/70">Lade Notizen...</p>
+                <p className="text-sm text-slate-300/70">{t('notes_loading')}</p>
               ) : notesError ? (
                 <p className="text-sm text-red-200/90">{notesError}</p>
               ) : notes.length === 0 ? (
-                <p className="text-sm text-slate-300/70">Noch keine Notizen vorhanden.</p>
+                <p className="text-sm text-slate-300/70">{t('notes_empty')}</p>
               ) : (
                 (() => {
                   const note = notes[0]
@@ -977,7 +1140,7 @@ const TablePage = ({
                           onClick={() => setNoteExpanded((v) => !v)}
                           className="mt-2 text-xs font-semibold text-emerald-200 hover:text-emerald-100"
                         >
-                          {noteExpanded ? 'Weniger anzeigen' : 'Mehr öffnen'}
+                          {noteExpanded ? t('notes_less') : t('notes_more')}
                         </button>
                       ) : null}
                     </div>
@@ -993,9 +1156,9 @@ const TablePage = ({
       <Card title={tableTitle} kicker="Live Ranking" id="standings" className="mt-12">
         <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
           {[
-            { value: 'all', label: 'All' },
-            { value: 'home', label: 'Home' },
-            { value: 'away', label: 'Away' },
+            { value: 'all', label: t('public_filter_all') },
+            { value: 'home', label: t('public_filter_home') },
+            { value: 'away', label: t('public_filter_away') },
           ].map((opt) => (
             <button
               key={opt.value}
@@ -1192,6 +1355,7 @@ const slugify = (value) =>
     .replace(/(^-|-$)+/g, '') || `event-${Date.now()}`
 
 const GalleryPage = ({ isAdmin }) => {
+  const { t } = useI18n()
   const [eventName, setEventName] = useState('')
   const [events, setEvents] = useState([])
   const [eventError, setEventError] = useState('')
@@ -1462,22 +1626,22 @@ const GalleryPage = ({ isAdmin }) => {
       <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
       <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-400/20 via-transparent to-transparent blur-3xl" />
       <header className="mb-8">
-        <GradientBadge>Galerie</GradientBadge>
-        <h1 className="mt-3 font-display text-4xl font-semibold text-white">Momentes & Events</h1>
+        <GradientBadge>{t('gallery_badge')}</GradientBadge>
+        <h1 className="mt-3 font-display text-4xl font-semibold text-white">{t('gallery_title')}</h1>
       </header>
 
       {isAdmin ? (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Card title="Event anlegen" kicker="Neues">
+          <Card title={t('gallery_create_event')} kicker={t('gallery_new')}>
             <div className="space-y-3">
               <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                Event Name
+                {t('gallery_event_name')}
                 <input
                   type="text"
                   value={eventName}
                   onChange={(e) => setEventName(e.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
-                  placeholder="z.B. Derby 2025"
+                  placeholder={t('gallery_event_placeholder')}
                 />
               </label>
               {eventError ? (
@@ -1491,21 +1655,21 @@ const GalleryPage = ({ isAdmin }) => {
                 disabled={creatingEvent}
                 className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {creatingEvent ? 'Legt an...' : 'Event erstellen'}
+                {creatingEvent ? t('gallery_creating') : t('gallery_create')}
               </button>
             </div>
           </Card>
 
-          <Card title="Bilder hochladen" kicker="Upload">
+          <Card title={t('gallery_upload')} kicker={t('gallery_upload_kicker')}>
             <form className="space-y-3" onSubmit={handleUpload}>
               <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                Event Auswahl
+                {t('gallery_select_event')}
                 <select
                   value={selectedEventId}
                   onChange={(e) => setSelectedEventId(e.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
                 >
-                  <option value="">Event waehlen...</option>
+                  <option value="">{t('gallery_select_placeholder')}</option>
                   {events.map((evt) => (
                     <option key={evt.id} value={evt.id}>
                       {evt.name || evt.id}
@@ -1515,7 +1679,7 @@ const GalleryPage = ({ isAdmin }) => {
               </label>
 
               <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                Bilder
+                {t('gallery_images')}
                 <input
                   type="file"
                   accept="image/png,image/jpeg"
@@ -1525,10 +1689,10 @@ const GalleryPage = ({ isAdmin }) => {
                 />
                 {selectedFiles.length ? (
                   <p className="text-xs text-emerald-200/80">
-                    Ausgewaehlt: {selectedFiles.length} Datei(en)
+                    {t('gallery_selected')}: {selectedFiles.length} Datei(en)
                   </p>
                 ) : (
-                  <p className="text-xs text-slate-400">PNG oder JPG, mehrere Dateien möglich.</p>
+                  <p className="text-xs text-slate-400">{t('gallery_file_hint')}</p>
                 )}
               </label>
 
@@ -1543,7 +1707,7 @@ const GalleryPage = ({ isAdmin }) => {
                 disabled={uploading}
                 className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {uploading ? 'Laedt hoch...' : 'Bilder speichern'}
+                {uploading ? t('gallery_uploading') : t('gallery_save_images')}
               </button>
             </form>
           </Card>
@@ -1571,11 +1735,11 @@ const GalleryPage = ({ isAdmin }) => {
         </div>
       ) : (
         <div className="mt-8 space-y-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col items-start gap-3 md:flex-row md:items-center md:justify-between">
             <p className="text-xl font-semibold text-white">
               {selectedEvent ? selectedEvent.name || selectedEvent.id : 'Event'}
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center md:w-auto">
               {isAdmin ? (
                 <>
                   <input
@@ -1583,33 +1747,37 @@ const GalleryPage = ({ isAdmin }) => {
                     value={editEventName}
                     onChange={(e) => setEditEventName(e.target.value)}
                     className="rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-sm text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
-                    placeholder="Event-Namen bearbeiten"
+                    placeholder={t('gallery_event_name')}
                   />
-                  <button
-                    type="button"
-                    onClick={handleRenameEvent}
-                    disabled={savingEventName}
-                    className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50 disabled:opacity-60"
-                  >
-                    {savingEventName ? 'Speichert...' : 'Speichern'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDeleteEvent}
-                    disabled={deletingEvent}
-                    className="rounded-full border border-red-400/60 px-3 py-1 text-xs font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-60"
-                  >
-                    {deletingEvent ? 'Löscht...' : 'Event löschen'}
-                  </button>
+                  <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+                    <button
+                      type="button"
+                      onClick={handleRenameEvent}
+                      disabled={savingEventName}
+                      className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50 disabled:opacity-60"
+                    >
+                      {savingEventName ? t('gallery_creating') : t('gallery_save')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteEvent}
+                      disabled={deletingEvent}
+                      className="rounded-full border border-red-400/60 px-3 py-1 text-xs font-semibold text-red-200 hover:bg-red-500/10 disabled:opacity-60"
+                    >
+                      {deletingEvent ? t('gallery_deleting') : t('gallery_delete')}
+                    </button>
+                  </div>
                 </>
               ) : null}
-              <button
-                type="button"
-                onClick={() => setSelectedEventId('')}
-                className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50"
-              >
-                Zurück zu Events
-              </button>
+              <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setSelectedEventId('')}
+                  className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50"
+                >
+                  {t('gallery_back')}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1704,13 +1872,13 @@ const GalleryPage = ({ isAdmin }) => {
             </>
           ) : null}
           <div
-            className="max-h-[90vh] max-w-[95vw] overflow-auto rounded-2xl border border-white/15 bg-slate-900/60 p-2"
+            className="max-h-[90vh] max-w-[95vw] overflow-hidden rounded-2xl border border-white/15 bg-slate-900/60 p-2"
             onClick={(event) => event.stopPropagation()}
           >
             <img
               src={currentLightboxImage.dataUrl}
               alt={currentLightboxImage.name || 'Event Bild'}
-              className="h-auto w-auto max-w-none"
+              className="max-h-[85vh] w-auto max-w-[90vw] object-contain sm:max-h-[85vh] sm:max-w-[90vw]"
             />
           </div>
           {images.length > 1 && lightboxIndex !== null ? (
@@ -1725,6 +1893,7 @@ const GalleryPage = ({ isAdmin }) => {
 }
 
 const SchedulePage = ({ user, isAdmin }) => {
+  const { t } = useI18n()
   const defaultDate = new Date().toLocaleDateString('sv-SE')
   const defaultHour = new Date().toLocaleTimeString('de-DE', {
     hour: '2-digit',
@@ -1985,9 +2154,9 @@ const SchedulePage = ({ user, isAdmin }) => {
       <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
       <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
       <header className="mb-8">
-        <GradientBadge>Spielplan</GradientBadge>
-        <h1 className="mt-3 font-display text-4xl font-semibold text-white">Spiele & Zusagen</h1>
-        <p className="text-slate-300/80">Nur für angemeldete Spieler und Admins.</p>
+        <GradientBadge>{t('schedule_badge')}</GradientBadge>
+        <h1 className="mt-3 font-display text-4xl font-semibold text-white">{t('schedule_title')}</h1>
+        <p className="text-slate-300/80">{t('schedule_subtitle')}</p>
       </header>
 
       <div className="space-y-6">
@@ -2367,9 +2536,10 @@ const SchedulePage = ({ user, isAdmin }) => {
                           <button
                             type="button"
                             disabled={!user || votingId === game.id || isVotingClosed(game)}
-                            onClick={() => handleVote(game.id, 'yes')}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClickCapture={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleVote(game.id, 'yes')
+                            }}
                             className={`rounded-full px-4 py-2 text-lg font-semibold transition ${
                               userVote === 'yes'
                                 ? 'bg-emerald-500/20 text-emerald-50 border border-emerald-400/60'
@@ -2381,9 +2551,10 @@ const SchedulePage = ({ user, isAdmin }) => {
                           <button
                             type="button"
                             disabled={!user || votingId === game.id || isVotingClosed(game)}
-                            onClick={() => handleVote(game.id, 'maybe')}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClickCapture={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleVote(game.id, 'maybe')
+                            }}
                             className={`rounded-full px-4 py-2 text-lg font-semibold transition ${
                               userVote === 'maybe'
                                 ? 'bg-amber-500/20 text-amber-50 border border-amber-400/60'
@@ -2395,9 +2566,10 @@ const SchedulePage = ({ user, isAdmin }) => {
                           <button
                             type="button"
                             disabled={!user || votingId === game.id || isVotingClosed(game)}
-                            onClick={() => handleVote(game.id, 'no')}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClickCapture={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleVote(game.id, 'no')
+                            }}
                             className={`rounded-full px-4 py-2 text-lg font-semibold transition ${
                               userVote === 'no'
                                 ? 'bg-red-500/20 text-red-100 border border-red-400/60'
@@ -2407,11 +2579,13 @@ const SchedulePage = ({ user, isAdmin }) => {
                             👎
                           </button>
                           {isAdmin ? (
-                            <>
+                            <div className="flex items-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => startEditGame(game)}
-                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  startEditGame(game)
+                                }}
                                 className="rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold text-white transition hover:border-emerald-300/50"
                               >
                                 Bearbeiten
@@ -2419,13 +2593,15 @@ const SchedulePage = ({ user, isAdmin }) => {
                               <button
                                 type="button"
                                 disabled={deletingGameId === game.id}
-                                onClick={() => handleDeleteGame(game.id)}
-                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteGame(game.id)
+                                }}
                                 className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                               >
                                 {deletingGameId === game.id ? '...' : 'Loeschen'}
                               </button>
-                            </>
+                            </div>
                           ) : null}
                         </div>
                       </div>
@@ -2511,6 +2687,7 @@ const SchedulePage = ({ user, isAdmin }) => {
 }
 
 const TeamPage = ({ isAdmin }) => {
+  const { t } = useI18n()
   const [players, setPlayers] = useState([])
   const [loadingPlayers, setLoadingPlayers] = useState(true)
   const [playersError, setPlayersError] = useState('')
@@ -2657,8 +2834,8 @@ const TeamPage = ({ isAdmin }) => {
       <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
       <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/15 via-transparent to-transparent blur-3xl" />
       <header className="mb-8">
-        <GradientBadge>Mannschaft</GradientBadge>
-        <h1 className="mt-3 font-display text-4xl font-semibold text-white">Gut Schluck Hauset</h1>
+        <GradientBadge>{t('team_badge')}</GradientBadge>
+        <h1 className="mt-3 font-display text-4xl font-semibold text-white">{t('team_title')}</h1>
       </header>
 
       {isAdmin ? (
@@ -2825,36 +3002,81 @@ const TeamPage = ({ isAdmin }) => {
 }
 
 const PublicTablePage = ({ matches, activeTable }) => {
+  const { t } = useI18n()
   const [publicFilter, setPublicFilter] = useState('all')
   const publicMatches = useMemo(() => {
     if (!activeTable) return []
     return matches.filter((match) => match.tableId === activeTable.id)
   }, [matches, activeTable])
+  const publicLatestMatches = useMemo(() => {
+    const getMatchTime = (match) => {
+      if (!match?.date) return 0
+      if (match.date?.toDate) return match.date.toDate().getTime()
+      const parsed = new Date(match.date)
+      return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime()
+    }
+    return [...publicMatches].sort((a, b) => getMatchTime(b) - getMatchTime(a)).slice(0, 6)
+  }, [publicMatches])
   const standingsView = useMemo(
     () => computeStandings(publicMatches, publicFilter),
     [publicMatches, publicFilter],
   )
-  const tableTitle = activeTable ? activeTable.name : 'Tabelle'
+  const tableTitle = activeTable ? activeTable.name : t('nav_table')
 
   return (
     <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
       <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
       <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
       <header className="mb-8">
-        <GradientBadge>Spielstand</GradientBadge>
+        <GradientBadge>{t('public_badge')}</GradientBadge>
         <h1 className="mt-3 font-display text-4xl font-semibold text-white">{tableTitle}</h1>
-        <p className="text-slate-300/80">
-          {activeTable ? `Aktive Tabelle: ${tableTitle}` : 'Aktive Tabelle: -'}
-          <br />
-          Ergebnisse und Tabelle für alle Fans und Mitglieder
-        </p>
+        <p className="text-slate-300/80">{t('public_subtitle')}</p>
       </header>
+      <Card title={t('live_feed')} kicker="Live Feed" id="public-results" className="mb-8">
+        <div className="space-y-3">
+          {publicLatestMatches.length === 0 ? (
+            <p className="text-sm text-slate-300/70">
+              {activeTable ? t('live_feed_empty') : t('live_feed_select')}
+            </p>
+          ) : (
+            publicLatestMatches.map((match) => {
+              const isGsh = match.homeTeam === 'Gut Schluck Hauset' || match.awayTeam === 'Gut Schluck Hauset'
+              return (
+                <div
+                  key={match.id}
+                  className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${
+                    isGsh
+                      ? 'border-emerald-400/50 bg-emerald-500/10 shadow-lg shadow-emerald-500/20'
+                      : 'border-white/5 bg-white/5'
+                  }`}
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      {match.homeTeam} <span className="text-emerald-200">vs</span> {match.awayTeam}
+                    </p>
+                    <p className="text-xs text-slate-300/70">{formatDate(match.date)}</p>
+                  </div>
+                  <div
+                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
+                      isGsh ? 'bg-emerald-500/20 text-emerald-50' : 'bg-slate-900/80 text-emerald-100'
+                    }`}
+                  >
+                    <span>{match.homeScore}</span>
+                    <span>:</span>
+                    <span>{match.awayScore}</span>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      </Card>
       <Card title={tableTitle} kicker="Live Ranking">
         <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
           {[
-            { value: 'all', label: 'All' },
-            { value: 'home', label: 'Home' },
-            { value: 'away', label: 'Away' },
+            { value: 'all', label: t('public_filter_all') },
+            { value: 'home', label: t('public_filter_home') },
+            { value: 'away', label: t('public_filter_away') },
           ].map((opt) => (
             <button
               key={opt.value}
@@ -2888,7 +3110,7 @@ const PublicTablePage = ({ matches, activeTable }) => {
               {standingsView.length === 0 ? (
                 <tr>
                   <td colSpan="9" className="py-4 text-center text-slate-300/70">
-                    Noch keine Daten. Erfasse das erste Ergebnis im privaten Bereich.
+                    {t('public_no_data')}
                   </td>
                 </tr>
               ) : (
@@ -2917,6 +3139,7 @@ const PublicTablePage = ({ matches, activeTable }) => {
 }
 
 const LoginPage = ({ user }) => {
+  const { t } = useI18n()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -2953,12 +3176,12 @@ const LoginPage = ({ user }) => {
       <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
       <div className="mx-auto max-w-xl space-y-6 rounded-3xl border border-white/5 bg-slate-900/70 p-8 shadow-soft backdrop-blur">
         <div>
-          <GradientBadge>Login</GradientBadge>
-          <h1 className="mt-3 font-display text-3xl font-semibold text-white">Anmelden</h1>
+          <GradientBadge>{t('login_badge')}</GradientBadge>
+          <h1 className="mt-3 font-display text-3xl font-semibold text-white">{t('login_title')}</h1>
           <p className="text-slate-300/80">
-            Melde dich mit deiner E-Mail und deinem Passwort an.
+            {t('login_subtitle')}
             <br />
-            Nur für Vereinsmitglieder.
+            {t('login_members')}
           </p>
         </div>
 
@@ -2970,7 +3193,7 @@ const LoginPage = ({ user }) => {
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-            E-Mail
+            {t('login_email')}
             <input
               type="email"
               value={email}
@@ -2980,7 +3203,7 @@ const LoginPage = ({ user }) => {
             />
           </label>
           <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-            Passwort
+            {t('login_password')}
             <input
               type="password"
               value={password}
@@ -3001,7 +3224,7 @@ const LoginPage = ({ user }) => {
             disabled={loading}
             className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? 'Anmeldung läuft...' : 'Anmelden'}
+            {loading ? t('login_loading') : t('login_button')}
           </button>
         </form>
       </div>
@@ -3009,7 +3232,7 @@ const LoginPage = ({ user }) => {
   )
 }
 
-const SettingsPage = ({ user, onProfileSaved }) => {
+const SettingsPage = ({ user, onProfileSaved, theme, onThemeChange }) => {
   const [displayName, setDisplayName] = useState(user?.displayName || '')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -3026,7 +3249,7 @@ const SettingsPage = ({ user, onProfileSaved }) => {
     setSaving(true)
     try {
       await user.reload()
-      await user.updateProfile({ displayName: displayName || null })
+      await updateProfile(user, { displayName: displayName || null })
       setMessage('Profil aktualisiert.')
       onProfileSaved?.()
     } catch (err) {
@@ -3045,10 +3268,31 @@ const SettingsPage = ({ user, onProfileSaved }) => {
         <div>
           <GradientBadge>Profil</GradientBadge>
           <h1 className="mt-3 font-display text-3xl font-semibold text-white">Einstellungen</h1>
-          <p className="text-slate-300/80">Passe deinen Anzeigenamen an.</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSave}>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-slate-200/80">Design</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'dark', label: 'Dark Mode' },
+                { value: 'light', label: 'Light Mode' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => onThemeChange?.(opt.value)}
+                  className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
+                    theme === opt.value
+                      ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-50 shadow shadow-emerald-500/30'
+                      : 'border-white/10 bg-white/5 text-slate-200 hover:border-emerald-300/50 hover:text-emerald-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <label className="flex flex-col gap-2 text-sm text-slate-200/80">
             Anzeigename
             <input
@@ -3056,7 +3300,7 @@ const SettingsPage = ({ user, onProfileSaved }) => {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
-              placeholder="z.B. Dein Name"
+              placeholder="Vorname, Nachname"
             />
           </label>
 
@@ -3087,6 +3331,14 @@ const SettingsPage = ({ user, onProfileSaved }) => {
 const AppShell = () => {
   const [matches, setMatches] = useState([])
   const [tables, setTables] = useState([])
+  const [playerProfiles, setPlayerProfiles] = useState([])
+  const [theme, setTheme] = useState(() => {
+    try {
+      return window?.localStorage?.getItem('gsh-theme') || 'dark'
+    } catch {
+      return 'dark'
+    }
+  })
   const [loadingTables, setLoadingTables] = useState(true)
   const [tablesError, setTablesError] = useState('')
   const [selectedTableId, setSelectedTableId] = useState('')
@@ -3111,6 +3363,12 @@ const AppShell = () => {
     if (!email) return false
     return ADMIN_EMAILS.includes(email)
   }, [user])
+  const userAvatar = useMemo(() => {
+    const name = normalizeName(user?.displayName)
+    if (!name) return null
+    const match = playerProfiles.find((player) => normalizeName(player?.name) === name)
+    return match?.photo || null
+  }, [playerProfiles, user])
 
   useEffect(() => {
     const q = query(collection(db, 'matches'), orderBy('date', 'desc'))
@@ -3164,6 +3422,30 @@ const AppShell = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (nextUser) => setUser(nextUser))
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    const next = theme === 'light' ? 'light' : 'dark'
+    document.documentElement.dataset.theme = next
+    try {
+      window?.localStorage?.setItem('gsh-theme', next)
+    } catch (err) {
+      console.warn('Konnte Theme nicht speichern.', err)
+    }
+  }, [theme])
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, 'playerprofiles'),
+      (snapshot) => {
+        const next = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
+        setPlayerProfiles(next)
+      },
+      (err) => {
+        console.error(err)
+      },
+    )
     return () => unsubscribe()
   }, [])
 
@@ -3234,14 +3516,14 @@ const AppShell = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-16">
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-slate-950 to-slate-950" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(15,118,110,0.25),transparent_25%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(249,115,22,0.2),transparent_25%)]" />
-      </div>
-      <TopNav user={user} onLogout={handleLogout} navItems={navItems} />
-      <Routes>
+      <div className={`min-h-screen pb-16 ${theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
+        <div className="pointer-events-none fixed inset-0 -z-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-slate-950 to-slate-950" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(15,118,110,0.25),transparent_25%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(249,115,22,0.2),transparent_25%)]" />
+        </div>
+        <TopNav user={user} userAvatar={userAvatar} onLogout={handleLogout} navItems={navItems} />
+        <Routes>
         <Route
           path="/"
           element={<HomePage />}
@@ -3290,6 +3572,19 @@ const AppShell = () => {
         <Route path="/news" element={<NewsPage />} />
         <Route path="/anfahrt" element={<AnfahrtPage />} />
         <Route path="/ueber-uns" element={<AboutPage />} />
+        <Route
+          path="/einstellungen"
+          element={
+            <PrivateRoute user={user}>
+              <SettingsPage
+                user={user}
+                onProfileSaved={() => setUser(auth.currentUser)}
+                theme={theme}
+                onThemeChange={setTheme}
+              />
+            </PrivateRoute>
+          }
+        />
         <Route path="/login" element={<LoginPage user={user} />} />
       </Routes>
     </div>

@@ -16,6 +16,82 @@ body {
   min-height: 100vh;
 }
 
+:root[data-theme='light'] {
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+:root[data-theme='light'] body {
+  background: radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.12), transparent 25%),
+    radial-gradient(circle at 80% 10%, rgba(249, 115, 22, 0.12), transparent 20%),
+    linear-gradient(180deg, #f8fafc, #eef2f7 45%, #f8fafc);
+}
+
+:root[data-theme='light'] .bg-slate-950\/90,
+:root[data-theme='light'] .bg-slate-950\/95,
+:root[data-theme='light'] .bg-slate-950\/60,
+:root[data-theme='light'] .bg-slate-950 {
+  background-color: rgba(248, 250, 252, 0.95);
+}
+
+:root[data-theme='light'] .bg-slate-900\/80,
+:root[data-theme='light'] .bg-slate-900\/70,
+:root[data-theme='light'] .bg-slate-900\/60,
+:root[data-theme='light'] .bg-slate-900\/95,
+:root[data-theme='light'] .bg-slate-900 {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme='light'] .bg-slate-800\/80,
+:root[data-theme='light'] .bg-slate-800\/70,
+:root[data-theme='light'] .bg-slate-800\/60,
+:root[data-theme='light'] .bg-slate-800 {
+  background-color: rgba(241, 245, 249, 0.9);
+}
+
+:root[data-theme='light'] .bg-white\/5 {
+  background-color: rgba(15, 23, 42, 0.04);
+}
+
+:root[data-theme='light'] .border-white\/5 {
+  border-color: rgba(15, 23, 42, 0.08);
+}
+
+:root[data-theme='light'] .border-white\/10,
+:root[data-theme='light'] .border-white\/15,
+:root[data-theme='light'] .border-white\/20 {
+  border-color: rgba(15, 23, 42, 0.15);
+}
+
+:root[data-theme='light'] .text-white {
+  color: #0f172a;
+}
+
+:root[data-theme='light'] .text-slate-200,
+:root[data-theme='light'] .text-slate-200\/80,
+:root[data-theme='light'] .text-slate-200\/90,
+:root[data-theme='light'] .text-slate-200\/70 {
+  color: #334155;
+}
+
+:root[data-theme='light'] .text-slate-300,
+:root[data-theme='light'] .text-slate-300\/80,
+:root[data-theme='light'] .text-slate-300\/70 {
+  color: #475569;
+}
+
+:root[data-theme='light'] .text-emerald-100,
+:root[data-theme='light'] .text-emerald-200,
+:root[data-theme='light'] .text-emerald-200\/70,
+:root[data-theme='light'] .text-emerald-200\/80,
+:root[data-theme='light'] .text-emerald-50 {
+  color: #0f766e;
+}
+
+:root[data-theme='light'] .shadow-soft {
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+}
+
 * {
   box-sizing: border-box;
 }
