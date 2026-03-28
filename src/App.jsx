@@ -48,8 +48,8 @@ const STADIUM_OPTIONS = [
   'Schönefelderweg 240, 4700 Eupen, Belgien (Untergrund: Rasen)',
   'Lichtenbuscher Straße 155, 4731 Raeren, Belgien (Untergrund: Rasen)',
   'Talstraße 43, 4701 Eupen, Belgien (Untergrund: Rasen)',
-  'Gemmenich',
-  'Faymonville',
+  'Rue César Franck 163, 4851 Plombières, Belgien',
+  'Rue de Robrou 5,4950 Waimes, Belgien (Untergrund: Rasen)',
 ]
 
 const POSITION_GROUPS = [
