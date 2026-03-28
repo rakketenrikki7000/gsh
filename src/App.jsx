@@ -26,8 +26,6 @@ import { onAuthStateChanged, signInWithEmailAndPassword, signOut, updateProfile 
 import { auth, db } from './firebase'
 
 const TEAM_OPTIONS = [
-  'ASV Werth',
-  'BSV Rakete',
   'Bilstain',
   'Gut Schluck Hauset',
   'Hall Star',
@@ -35,6 +33,7 @@ const TEAM_OPTIONS = [
   'Inferno',
   'Kettenis A',
   'Kettenis B',
+  'Rakete',
   'Tanja',
   'Tornado',
   'Tülje',
@@ -132,11 +131,15 @@ const I18N_DE = {
   notes_label: 'Anmerkung',
   notes_placeholder: 'Kurz anmerken...',
   notes_save: 'Anmerkung speichern',
+  notes_update: 'Anmerkung aktualisieren',
   notes_saving: 'Speichert...',
   notes_loading: 'Lade Notizen...',
   notes_empty: 'Noch keine Notizen vorhanden.',
   notes_more: 'Mehr öffnen',
   notes_less: 'Weniger anzeigen',
+  notes_edit: 'Bearbeiten',
+  notes_delete: 'Loeschen',
+  notes_cancel: 'Abbrechen',
   public_badge: 'Spielstand',
   public_subtitle: 'Ergebnisse und Tabelle für alle Fans und Mitglieder',
   public_filter_all: 'All',
@@ -384,7 +387,23 @@ const TopNav = ({ user, userAvatar, onLogout, navItems }) => {
           onClick={() => setOpen((v) => !v)}
           aria-label="Menue"
         >
-          <span className="text-lg">{open ? 'X' : '|||'}</span>
+          {open ? (
+            <span className="text-lg leading-none">X</span>
+          ) : (
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <path d="M4 7h16" />
+              <path d="M4 12h16" />
+              <path d="M4 17h16" />
+            </svg>
+          )}
         </button>
 
         <nav
@@ -698,6 +717,8 @@ const TablePage = ({
   const [noteForm, setNoteForm] = useState({ body: '' })
   const [savingNote, setSavingNote] = useState(false)
   const [noteExpanded, setNoteExpanded] = useState(false)
+  const [editingNoteId, setEditingNoteId] = useState('')
+  const [deletingNoteId, setDeletingNoteId] = useState('')
   const [tableForm, setTableForm] = useState({ name: '' })
   const [creatingTable, setCreatingTable] = useState(false)
   const [tableCreateError, setTableCreateError] = useState('')
@@ -714,8 +735,8 @@ const TablePage = ({
   const latestMatches = useMemo(
     () =>
       [...activeMatches]
-        .sort((a, b) => (toTime(b.date || b.createdAt) ?? 0) - (toTime(a.date || a.createdAt) ?? 0))
-        .slice(0, 4),
+        .sort((a, b) => (toTime(b.createdAt || b.date) ?? 0) - (toTime(a.createdAt || a.date) ?? 0))
+        .slice(0, 6),
     [activeMatches],
   )
 
@@ -727,6 +748,11 @@ const TablePage = ({
 
   const handleNoteChange = (event) => {
     setNoteForm({ body: event.target.value })
+  }
+
+  const resetNoteForm = () => {
+    setNoteForm({ body: '' })
+    setEditingNoteId('')
   }
 
   const handleTableField = (field) => (event) => {
@@ -804,16 +830,47 @@ const TablePage = ({
     }
     setSavingNote(true)
     try {
-      await addDoc(collection(db, 'notes'), {
-        body: noteForm.body,
-        createdAt: serverTimestamp(),
-      })
-      setNoteForm({ body: '' })
+      if (editingNoteId) {
+        await updateDoc(doc(db, 'notes', editingNoteId), {
+          body: noteForm.body.trim(),
+          updatedAt: serverTimestamp(),
+        })
+      } else {
+        await addDoc(collection(db, 'notes'), {
+          body: noteForm.body.trim(),
+          createdAt: serverTimestamp(),
+        })
+      }
+      resetNoteForm()
     } catch (err) {
       console.error(err)
       setNotesError('Konnte Notiz nicht speichern.')
     } finally {
       setSavingNote(false)
+    }
+  }
+
+  const handleEditNote = (note) => {
+    setNotesError('')
+    setEditingNoteId(note.id)
+    setNoteForm({ body: note.body || note.text || '' })
+  }
+
+  const handleDeleteNote = async (noteId) => {
+    const ok = window.confirm('Diese Anmerkung wirklich löschen?')
+    if (!ok) return
+    setNotesError('')
+    setDeletingNoteId(noteId)
+    try {
+      await deleteDoc(doc(db, 'notes', noteId))
+      if (editingNoteId === noteId) {
+        resetNoteForm()
+      }
+    } catch (err) {
+      console.error(err)
+      setNotesError('Konnte Notiz nicht löschen.')
+    } finally {
+      setDeletingNoteId('')
     }
   }
 
@@ -1111,8 +1168,17 @@ const TablePage = ({
                   disabled={savingNote}
                   className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {savingNote ? t('notes_saving') : t('notes_save')}
+                  {savingNote ? t('notes_saving') : editingNoteId ? t('notes_update') : t('notes_save')}
                 </button>
+                {editingNoteId ? (
+                  <button
+                    type="button"
+                    onClick={resetNoteForm}
+                    className="ml-2 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-white/25 hover:bg-white/10"
+                  >
+                    {t('notes_cancel')}
+                  </button>
+                ) : null}
               </form>
             ) : null}
 
@@ -1135,6 +1201,25 @@ const TablePage = ({
                     <div key={note.id} className="rounded-2xl border border-white/5 bg-white/5 p-3">
                       <p className="text-sm text-slate-200/90">{displayText}</p>
                       <p className="mt-1 text-[11px] text-slate-300/70">{formatDate(note.createdAt)}</p>
+                      {isAdmin ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEditNote(note)}
+                            className="rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-100 transition hover:border-emerald-300/70 hover:bg-emerald-500/20"
+                          >
+                            {t('notes_edit')}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={deletingNoteId === note.id}
+                            onClick={() => handleDeleteNote(note.id)}
+                            className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {deletingNoteId === note.id ? '...' : t('notes_delete')}
+                          </button>
+                        </div>
+                      ) : null}
                       {isLong ? (
                         <button
                           type="button"
@@ -2118,13 +2203,18 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
   const getLineupAssignments = (gameId) => lineupAssignmentsByGame[gameId] || {}
 
   const setLineupAssignment = (gameId, slot, playerKey) => {
-    setLineupAssignmentsByGame((prev) => ({
-      ...prev,
-      [gameId]: {
-        ...(prev[gameId] || {}),
-        [slot]: playerKey,
-      },
-    }))
+    setLineupAssignmentsByGame((prev) => {
+      const currentAssignments = prev[gameId] || {}
+      const nextAssignments = Object.fromEntries(
+        Object.entries(currentAssignments).filter(([, assignedPlayerKey]) => assignedPlayerKey !== playerKey),
+      )
+      nextAssignments[slot] = playerKey
+
+      return {
+        ...prev,
+        [gameId]: nextAssignments,
+      }
+    })
   }
 
   const clearLineupAssignment = (gameId, slot) => {
@@ -2133,6 +2223,21 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
       delete next[slot]
       return { ...prev, [gameId]: next }
     })
+  }
+
+  const resetLineupAssignments = (gameId) => {
+    setLineupAssignmentsByGame((prev) => ({
+      ...prev,
+      [gameId]: {},
+    }))
+    setSelectedLineupPlayer(gameId, '')
+  }
+
+  const handleFormationChange = (gameId, nextFormation) => {
+    setLineupFormationByGame((prev) => ({
+      ...prev,
+      [gameId]: nextFormation,
+    }))
   }
 
   const getSelectedLineupPlayer = (gameId) => selectedLineupPlayerByGame[gameId] || ''
@@ -2885,8 +2990,11 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                             </p>
                             <div className="mt-2 grid grid-cols-1 gap-3">
                               {(() => {
+                                const visibleSlots = new Set(formationSlots(getLineupFormation(game.id)))
                                 const assignedKeys = new Set(
-                                  Object.values(getLineupAssignments(game.id) || {}).filter(Boolean),
+                                  Object.entries(getLineupAssignments(game.id) || {})
+                                    .filter(([slot, playerKey]) => visibleSlots.has(slot) && playerKey)
+                                    .map(([, playerKey]) => playerKey),
                                 )
                                 const availablePlayers = yesList.filter((v) => {
                                   const key = (v?.email || v?.name || '').toLowerCase()
@@ -3035,12 +3143,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                                 <button
                                   key={opt.value}
                                   type="button"
-                                  onClick={() =>
-                                    setLineupFormationByGame((prev) => ({
-                                      ...prev,
-                                      [game.id]: opt.value,
-                                    }))
-                                  }
+                                  onClick={() => handleFormationChange(game.id, opt.value)}
                                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                                     getLineupFormation(game.id) === opt.value
                                       ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-50'
@@ -3051,6 +3154,13 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                                 </button>
                               ))}
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => resetLineupAssignments(game.id)}
+                              className="rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20"
+                            >
+                              Zuruecksetzen
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -3389,9 +3499,10 @@ const PublicTablePage = ({ matches, activeTable }) => {
   }, [matches, activeTable])
   const publicLatestMatches = useMemo(() => {
     const getMatchTime = (match) => {
-      if (!match?.date) return 0
-      if (match.date?.toDate) return match.date.toDate().getTime()
-      const parsed = new Date(match.date)
+      const sortValue = match?.createdAt || match?.date
+      if (!sortValue) return 0
+      if (sortValue?.toDate) return sortValue.toDate().getTime()
+      const parsed = new Date(sortValue)
       return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime()
     }
     return [...publicMatches].sort((a, b) => getMatchTime(b) - getMatchTime(a)).slice(0, 6)
