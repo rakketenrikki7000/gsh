@@ -8,7 +8,7 @@ export default {
         body: ['"Inter Tight"', 'system-ui', 'sans-serif'],
       },
       colors: {
-        primary: '#0f766e',
+        primary: '#38bdf8',
         accent: '#f97316',
         night: '#0b1221',
         mist: '#0f172a',
