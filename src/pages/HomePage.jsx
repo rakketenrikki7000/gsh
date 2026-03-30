@@ -106,28 +106,24 @@ const HomePage = ({ user }) => {
             className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm font-semibold text-white shadow-inner transition hover:-translate-y-0.5 hover:border-sky-400/60 hover:bg-white/15 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)]"
           >
             <span>Ergebnisse und Tabelle</span>
-            <span className="text-sky-200">Oeffnen</span>
           </Link>
           <Link
             to="/news"
             className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm font-semibold text-white shadow-inner transition hover:-translate-y-0.5 hover:border-sky-400/60 hover:bg-white/15 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)]"
           >
             <span>Aktuelle News</span>
-            <span className="text-sky-200">Lesen</span>
           </Link>
           <Link
             to="/galerie"
             className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm font-semibold text-white shadow-inner transition hover:-translate-y-0.5 hover:border-sky-400/60 hover:bg-white/15 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)]"
           >
             <span>Fotos und Events</span>
-            <span className="text-sky-200">Ansehen</span>
           </Link>
           <Link
             to="/mannschaft"
             className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm font-semibold text-white shadow-inner transition hover:-translate-y-0.5 hover:border-sky-400/60 hover:bg-white/15 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)]"
           >
             <span>Mannschaft und Trainerstab</span>
-            <span className="text-sky-200">Entdecken</span>
           </Link>
         </div>
         <p className="mt-4 text-sm leading-7 text-slate-300/85">

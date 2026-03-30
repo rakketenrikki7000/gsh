@@ -278,7 +278,90 @@ const TopNav = ({ user, userAvatar, onLogout, navItems }) => {
   )
 }
 
+const Footer = ({ user }) => {
+  const tableLink = user ? '/tabelle' : '/tabelle-oeffentlich'
+  const quickLinks = [
+    { to: '/news', label: 'News' },
+    { to: tableLink, label: 'Tabelle' },
+    { to: '/galerie', label: 'Galerie' },
+    { to: '/ueber-uns', label: 'Ueber uns' },
+  ]
 
-export { Card, GradientBadge, PlayerCard, PrivateRoute, SponsorMarquee, TopNav }
+  const socialLinks = [
+    {
+      href: 'https://www.facebook.com',
+      label: 'Facebook',
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
+          <path d="M13.5 21v-7h2.4l.4-3h-2.8V9.1c0-.9.3-1.6 1.6-1.6H16V4.8c-.2 0-.9-.1-1.8-.1c-2.7 0-4.2 1.6-4.2 4.5V11H7.5v3H10v7h3.5Z" />
+        </svg>
+      ),
+    },
+    {
+      href: 'https://www.instagram.com',
+      label: 'Instagram',
+      icon: (
+        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
+          <circle cx="12" cy="12" r="4.2" />
+          <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      ),
+    },
+  ]
+
+  return (
+    <footer className="relative mt-14 border-t border-white/10 bg-slate-950/92 backdrop-blur">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 top-0 -z-10">
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-emerald-500/20 via-transparent to-transparent blur-3xl" />
+      </div>
+      <div className="flex w-full items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-10">
+        <Link to="/" className="flex items-center gap-3 text-white">
+          <img
+            src="/gs-hauset-logo.png"
+            alt="GS Hauset Logo"
+            className="h-8 w-8 rounded-xl bg-white/10 p-1 object-contain"
+            loading="lazy"
+          />
+          <div className="leading-none">
+            <p className="text-sm font-semibold">Gut Schluck Hauset</p>
+            <p className="mt-1 text-[10px] uppercase tracking-[0.24em] text-emerald-100/80">Fussball</p>
+          </div>
+        </Link>
+
+        <div className="hidden flex-1 items-center justify-center gap-x-4 text-xs text-slate-300/85 md:flex">
+          {quickLinks.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="transition hover:text-sky-100"
+            >
+              {item.label}
+            </Link>
+          ))}
+          <span className="text-slate-500">|</span>
+          <span className="text-slate-400">Kirchstrasse 97, 4730 Raeren</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {socialLinks.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={item.label}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:border-sky-400/60 hover:bg-white/15 hover:text-sky-100"
+            >
+              {item.icon}
+            </a>
+          ))}
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+export { Card, Footer, GradientBadge, PlayerCard, PrivateRoute, SponsorMarquee, TopNav }
 
 

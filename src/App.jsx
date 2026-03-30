@@ -4,7 +4,7 @@ import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { auth, db } from './firebase'
 import { ADMIN_EMAILS, PRIVATE_NAV_ITEMS, PUBLIC_NAV_ITEMS, TABLE_STORAGE_KEY, computeStandings, normalizeName } from './app/shared'
-import { PrivateRoute, TopNav } from './app/ui'
+import { Footer, PrivateRoute, TopNav } from './app/ui'
 import HomePage from './pages/HomePage'
 import { NewsDetailPage, NewsPage } from './pages/NewsPage'
 import { TablePage } from './pages/TablePage'
@@ -209,75 +209,78 @@ const AppShell = () => {
   }
 
   return (
-    <div className={`min-h-screen pb-16 ${theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
+    <div className={`flex min-h-screen flex-col ${theme === 'light' ? 'bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-slate-950 to-slate-950" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(15,118,110,0.25),transparent_25%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(249,115,22,0.2),transparent_25%)]" />
       </div>
       <TopNav user={user} userAvatar={userAvatar} onLogout={handleLogout} navItems={navItems} />
-      <Routes>
-        <Route path="/" element={<HomePage user={user} />} />
-        <Route path="/tabelle-oeffentlich" element={<PublicTablePage matches={matches} activeTable={activeTable} />} />
-        <Route path="/galerie" element={<GalleryPage isAdmin={isAdmin} />} />
-        <Route
-          path="/tabelle"
-          element={
-            <PrivateRoute user={user}>
-              <TablePage
-                matches={matches}
-                form={form}
-                handleChange={handleChange}
-                handleSubmit={handleSubmit}
-                saving={saving}
-                error={error}
-                isAdmin={isAdmin}
-                tables={tables}
-                selectedTableId={selectedTableId}
-                onSelectTable={setSelectedTableId}
-                activeTable={activeTable}
-                tablesError={tablesError}
-                loadingTables={loadingTables}
-                onDeleteTable={handleDeleteTable}
-              />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/mannschaft"
-          element={
-            <PrivateRoute user={user}>
-              <TeamPage isAdmin={isAdmin} />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/spielplan"
-          element={
-            <PrivateRoute user={user}>
-              <SchedulePage user={user} isAdmin={isAdmin} playerProfiles={playerProfiles} />
-            </PrivateRoute>
-          }
-        />
-        <Route path="/news" element={<NewsPage isAdmin={isAdmin} />} />
-        <Route path="/news/:newsId" element={<NewsDetailPage isAdmin={isAdmin} />} />
-        <Route path="/anfahrt" element={<AnfahrtPage />} />
-        <Route path="/ueber-uns" element={<AboutPage />} />
-        <Route
-          path="/einstellungen"
-          element={
-            <PrivateRoute user={user}>
-              <SettingsPage
-                user={user}
-                onProfileSaved={() => setUser(auth.currentUser)}
-                theme={theme}
-                onThemeChange={setTheme}
-              />
-            </PrivateRoute>
-          }
-        />
-        <Route path="/login" element={<LoginPage user={user} />} />
-      </Routes>
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<HomePage user={user} />} />
+          <Route path="/tabelle-oeffentlich" element={<PublicTablePage matches={matches} activeTable={activeTable} />} />
+          <Route path="/galerie" element={<GalleryPage isAdmin={isAdmin} />} />
+          <Route
+            path="/tabelle"
+            element={
+              <PrivateRoute user={user}>
+                <TablePage
+                  matches={matches}
+                  form={form}
+                  handleChange={handleChange}
+                  handleSubmit={handleSubmit}
+                  saving={saving}
+                  error={error}
+                  isAdmin={isAdmin}
+                  tables={tables}
+                  selectedTableId={selectedTableId}
+                  onSelectTable={setSelectedTableId}
+                  activeTable={activeTable}
+                  tablesError={tablesError}
+                  loadingTables={loadingTables}
+                  onDeleteTable={handleDeleteTable}
+                />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/mannschaft"
+            element={
+              <PrivateRoute user={user}>
+                <TeamPage isAdmin={isAdmin} />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/spielplan"
+            element={
+              <PrivateRoute user={user}>
+                <SchedulePage user={user} isAdmin={isAdmin} playerProfiles={playerProfiles} />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/news" element={<NewsPage isAdmin={isAdmin} />} />
+          <Route path="/news/:newsId" element={<NewsDetailPage isAdmin={isAdmin} />} />
+          <Route path="/anfahrt" element={<AnfahrtPage />} />
+          <Route path="/ueber-uns" element={<AboutPage />} />
+          <Route
+            path="/einstellungen"
+            element={
+              <PrivateRoute user={user}>
+                <SettingsPage
+                  user={user}
+                  onProfileSaved={() => setUser(auth.currentUser)}
+                  theme={theme}
+                  onThemeChange={setTheme}
+                />
+              </PrivateRoute>
+            }
+          />
+          <Route path="/login" element={<LoginPage user={user} />} />
+        </Routes>
+      </main>
+      <Footer user={user} />
     </div>
   )
 }
