@@ -279,7 +279,6 @@ const Card = ({ title, kicker, children, id, className = '' }) => (
         {kicker ? <p className="text-xs uppercase tracking-[0.2em] text-emerald-200/70">{kicker}</p> : null}
         <h2 className="mt-1 text-xl font-semibold text-white">{title}</h2>
       </div>
-      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400/70 to-orange-400/80 blur-lg" />
     </div>
     {children}
   </section>
@@ -890,34 +889,35 @@ const NewsPage = ({ isAdmin }) => {
     ) : null}
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       {news.map((item) => (
-        <Card key={item.id || `${item.title}-${item.date}`}>
-          <article className="group">
-            {item.image ? (
-              <div className="mb-5 overflow-hidden rounded-[24px] border border-white/10 bg-slate-950/40 shadow-lg shadow-slate-950/30">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="h-52 w-full object-cover transition duration-500 group-hover:scale-[1.02]"
-                />
+        <Card key={item.id || `${item.title}-${item.date}`} className="transition hover:border-emerald-300/20 hover:bg-slate-900/70">
+          <Link to={`/news/${item.id}`} className="group -m-1 block rounded-[26px] p-1">
+            <article>
+              {item.image ? (
+                <div className="mb-5 overflow-hidden rounded-[24px] border border-white/10 bg-slate-950/40 shadow-lg shadow-slate-950/30">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="h-64 w-full object-cover object-center transition duration-500 group-hover:scale-[1.02]"
+                  />
+                </div>
+              ) : (
+                <div className="mb-5 rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.14),transparent_24%),linear-gradient(135deg,rgba(249,115,22,0.14),rgba(15,23,42,0.45))] px-5 py-10">
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200/80">Gut Schluck Hauset</p>
+                  <h3 className="mt-3 font-display text-3xl font-semibold text-white">{item.title}</h3>
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
+                  {formatDate(item.date)}
+                </span>
               </div>
-            ) : (
-              <div className="mb-5 rounded-[24px] border border-white/10 bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.14),transparent_24%),linear-gradient(135deg,rgba(249,115,22,0.14),rgba(15,23,42,0.45))] px-5 py-10">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-200/80">Gut Schluck Hauset</p>
-                <h3 className="mt-3 font-display text-3xl font-semibold text-white">{item.title}</h3>
-              </div>
-            )}
-            <div className="flex items-center gap-3">
-              <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                {formatDate(item.date)}
+              <h3 className="mt-4 font-display text-2xl font-semibold leading-tight text-white transition group-hover:text-emerald-100">
+                {item.title}
+              </h3>
+              <span className="mt-5 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white transition group-hover:border-emerald-300/60 group-hover:bg-white/10 group-hover:text-emerald-100">
+                {t('news_read_more')}
               </span>
-            </div>
-            <h3 className="mt-4 font-display text-2xl font-semibold leading-tight text-white">{item.title}</h3>
-          </article>
-          <Link
-            to={`/news/${item.id}`}
-            className="mt-5 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white transition hover:border-emerald-300/60 hover:bg-white/10 hover:text-emerald-100"
-          >
-            {t('news_read_more')}
+            </article>
           </Link>
           {isAdmin && item.id ? (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -1107,104 +1107,78 @@ const NewsDetailPage = ({ isAdmin }) => {
     <div className="relative isolate w-full px-4 pt-10 sm:px-6 lg:px-10">
       <div className="absolute inset-0 -z-10 bg-grid-radial bg-[length:40px_40px] opacity-30" />
       <div className="absolute inset-x-0 top-0 -z-10 h-64 bg-gradient-to-b from-orange-500/15 via-transparent to-transparent blur-3xl" />
-      <header className="mx-auto mb-8 max-w-4xl">
-        <h1 className="font-display text-4xl font-semibold text-white">{newsItem.title}</h1>
-        <p className="text-slate-300/80">{formatDate(newsItem.date)}</p>
-      </header>
+      {!isEditing ? (
+        <header className="mx-auto mb-8 max-w-4xl">
+          <h1 className="font-display text-4xl font-semibold text-white">{newsItem.title}</h1>
+          <p className="text-slate-300/80">{formatDate(newsItem.date)}</p>
+        </header>
+      ) : null}
       {isEditing ? (
-        <div className="mx-auto max-w-6xl">
-          <Card title="News bearbeiten" kicker="Admin">
-            <form className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]" onSubmit={handleUpdateNews}>
-              <div className="space-y-4">
-                <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                  Titel
-                  <input
-                    type="text"
-                    value={newsForm.title}
-                    onChange={handleNewsField('title')}
-                    className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
-                  />
-                </label>
-                <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                  Datum
-                  <input
-                    type="date"
-                    value={newsForm.date}
-                    onChange={handleNewsField('date')}
-                    className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
-                  />
-                </label>
-                <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                  Bild (optional)
-                  <input
-                    type="file"
-                    accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null
-                      setNewsImage(file)
-                      if (file) {
-                        const reader = new FileReader()
-                        reader.onload = () => setNewsImagePreview(reader.result || '')
-                        reader.readAsDataURL(file)
-                      }
-                    }}
-                    className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/30 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-white"
-                  />
-                </label>
-                {newsImagePreview ? (
-                  <div className="space-y-2">
-                    <div className="overflow-hidden rounded-2xl border border-white/10">
-                      <img src={newsImagePreview} alt="News Vorschau" className="h-56 w-full object-cover" />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNewsImage(null)
-                        setNewsImagePreview('')
-                      }}
-                      className="inline-flex items-center justify-center rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20"
-                    >
-                      Bild entfernen
-                    </button>
-                  </div>
-                ) : null}
-                <label className="flex flex-col gap-2 text-sm text-slate-200/80">
-                  Text
-                  <textarea
-                    value={newsForm.body}
-                    onChange={handleNewsField('body')}
-                    rows="10"
-                    className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
-                  />
-                </label>
-              </div>
-              <div className="space-y-4">
-                <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/70">Vorschau</p>
-                  <div className="mt-3 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/60">
-                    {newsImagePreview ? (
-                      <img src={newsImagePreview} alt={newsForm.title || 'News Bild'} className="h-56 w-full object-cover" />
-                    ) : (
-                      <div className="flex h-56 items-center justify-center bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.25),transparent_25%),linear-gradient(135deg,rgba(249,115,22,0.18),rgba(15,23,42,0.35))] text-sm font-semibold text-slate-200/80">
-                        Optionales News-Bild
-                      </div>
-                    )}
-                    <div className="space-y-3 p-4">
-                      <p className="text-xs text-slate-400">{formatDate(newsForm.date)}</p>
-                      <h3 className="font-display text-2xl font-semibold text-white">{newsForm.title || 'Titel deiner News'}</h3>
-                      <p className="whitespace-pre-wrap text-sm leading-6 text-slate-200/85">
-                        {newsForm.body || 'Hier siehst du direkt, wie die News nach dem Speichern wirkt.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <div className="mx-auto grid max-w-7xl gap-8 xl:grid-cols-[minmax(300px,1fr)_minmax(0,2fr)]">
+          <Card title="News bearbeiten" kicker="Admin" className="xl:sticky xl:top-24 xl:self-start">
+            <form className="space-y-4" onSubmit={handleUpdateNews}>
+              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                Titel
+                <input
+                  type="text"
+                  value={newsForm.title}
+                  onChange={handleNewsField('title')}
+                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                />
+              </label>
+              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                Datum
+                <input
+                  type="date"
+                  value={newsForm.date}
+                  onChange={handleNewsField('date')}
+                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                />
+              </label>
+              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                Bilder
+                <input
+                  type="file"
+                  accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null
+                    setNewsImage(file)
+                    if (file) {
+                      const reader = new FileReader()
+                      reader.onload = () => setNewsImagePreview(reader.result || '')
+                      reader.readAsDataURL(file)
+                    }
+                  }}
+                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/30 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-white"
+                />
+              </label>
+              {newsImagePreview ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewsImage(null)
+                    setNewsImagePreview('')
+                  }}
+                  className="inline-flex items-center justify-center rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20"
+                >
+                  Bild entfernen
+                </button>
+              ) : null}
+              <label className="flex flex-col gap-2 text-sm text-slate-200/80">
+                Text
+                <textarea
+                  value={newsForm.body}
+                  onChange={handleNewsField('body')}
+                  rows="14"
+                  className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
+                />
+              </label>
               {newsError ? (
-                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100 lg:col-span-2">
+                <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
                   {newsError}
                 </p>
               ) : null}
-              <div className="lg:col-span-2">
+              <div className="flex flex-wrap gap-2 pt-2">
                 <button
                   type="submit"
                   disabled={savingNews}
@@ -1215,7 +1189,7 @@ const NewsDetailPage = ({ isAdmin }) => {
                 <button
                   type="button"
                   onClick={closeEditMode}
-                  className="ml-2 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-semibold text-slate-100 transition hover:border-white/25 hover:bg-white/10"
+                  className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-5 py-2 text-sm font-semibold text-slate-100 transition hover:border-white/25 hover:bg-white/10"
                 >
                   Abbrechen
                 </button>
@@ -1223,13 +1197,37 @@ const NewsDetailPage = ({ isAdmin }) => {
                   type="button"
                   disabled={deletingNews}
                   onClick={handleDeleteNews}
-                  className="ml-2 inline-flex items-center justify-center rounded-full border border-red-500/40 bg-red-500/10 px-5 py-2 text-sm font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center rounded-full border border-red-500/40 bg-red-500/10 px-5 py-2 text-sm font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {deletingNews ? 'Loescht...' : 'Loeschen'}
                 </button>
               </div>
             </form>
           </Card>
+          <div className="min-w-0">
+            <header className="mb-8">
+              <h2 className="font-display text-4xl font-semibold text-white">
+                {newsForm.title || 'Titel deiner News'}
+              </h2>
+              <p className="text-slate-300/80">{formatDate(newsForm.date)}</p>
+            </header>
+            {newsImagePreview ? (
+              <div className="mb-10 flex justify-center">
+                <div className="w-full max-w-5xl overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/40 shadow-2xl shadow-slate-950/40">
+                  <img
+                    src={newsImagePreview}
+                    alt={newsForm.title || 'News Bild'}
+                    className="max-h-[540px] w-full object-cover object-center"
+                  />
+                </div>
+              </div>
+            ) : null}
+            <div className="mx-auto max-w-4xl">
+              <p className="whitespace-pre-wrap text-base leading-8 text-slate-200/90">
+                {newsForm.body || 'Hier erscheint der News-Text direkt in der finalen Artikelansicht.'}
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="mx-auto max-w-5xl">
