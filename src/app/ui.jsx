@@ -265,7 +265,7 @@ const TopNav = ({ user, userAvatar, onLogout, navItems }) => {
             ) : (
               <Link
                 to="/login"
-                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center rounded-full border border-sky-300/60 bg-sky-300 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-sky-500/20 transition hover:-translate-y-0.5 hover:bg-sky-200"
                 onClick={() => setOpen(false)}
               >
                 Anmelden
@@ -289,7 +289,7 @@ const Footer = ({ user }) => {
 
   const socialLinks = [
     {
-      href: 'https://www.facebook.com',
+      href: 'https://www.facebook.com/FCGutSchluckHauset',
       label: 'Facebook',
       className: 'border-[#1877F2] bg-[#1877F2] text-white hover:border-[#1877F2] hover:bg-[#1877F2] hover:text-white',
       icon: (
@@ -299,7 +299,7 @@ const Footer = ({ user }) => {
       ),
     },
     {
-      href: 'https://www.instagram.com',
+      href: 'https://www.instagram.com/gutschluckhauset/',
       label: 'Instagram',
       className: 'border-transparent text-white hover:border-transparent hover:text-white',
       style: {

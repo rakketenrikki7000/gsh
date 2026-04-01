@@ -46,6 +46,7 @@ const PUBLIC_NAV_ITEMS = [
   { to: '/', label: 'Home' },
   { to: '/news', label: 'News' },
   { to: '/tabelle-oeffentlich', label: 'Tabelle' },
+  { to: '/pokal', label: 'Pokal' },
   { to: '/galerie', label: 'Galerie' },
   { to: '/anfahrt', label: 'Anfahrt' },
   { to: '/ueber-uns', label: 'Über uns' },
@@ -55,6 +56,7 @@ const PRIVATE_NAV_ITEMS = [
   { to: '/', label: 'Home' },
   { to: '/news', label: 'News' },
   { to: '/tabelle', label: 'Tabelle' },
+  { to: '/pokal', label: 'Pokal' },
   { to: '/spielplan', label: 'Spielplan' },
   { to: '/mannschaft', label: 'Mannschaft' },
   { to: '/galerie', label: 'Galerie' },
@@ -244,4 +246,3 @@ export {
   normalizeName,
   useI18n,
 }
-

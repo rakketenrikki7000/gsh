@@ -11,6 +11,7 @@ import { TablePage } from './pages/TablePage'
 import PublicTablePage from './pages/PublicTablePage'
 import AnfahrtPage from './pages/AnfahrtPage'
 import AboutPage from './pages/AboutPage'
+import PokalPage from './pages/PokalPage'
 import GalleryPage from './pages/GalleryPage'
 import SchedulePage from './pages/SchedulePage'
 import TeamPage from './pages/TeamPage'
@@ -262,6 +263,7 @@ const AppShell = () => {
           />
           <Route path="/news" element={<NewsPage isAdmin={isAdmin} />} />
           <Route path="/news/:newsId" element={<NewsDetailPage isAdmin={isAdmin} />} />
+          <Route path="/pokal" element={<PokalPage isAdmin={isAdmin} />} />
           <Route path="/anfahrt" element={<AnfahrtPage />} />
           <Route path="/ueber-uns" element={<AboutPage />} />
           <Route

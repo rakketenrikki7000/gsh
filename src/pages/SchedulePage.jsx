@@ -58,6 +58,8 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
     startTime: `${defaultHour}:${defaultMinute}`,
   })
   const [votingId, setVotingId] = useState('')
+  const [voteReasonsByGame, setVoteReasonsByGame] = useState({})
+  const [openVoteDetailsByGame, setOpenVoteDetailsByGame] = useState({})
 
   useEffect(() => {
     const q = query(collection(db, 'schedule'), orderBy('date', 'asc'))
@@ -81,6 +83,21 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
     const id = setInterval(() => setNowTick(Date.now()), 60000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    if (!user) {
+      setVoteReasonsByGame({})
+      return
+    }
+    setVoteReasonsByGame((prev) => {
+      const next = { ...prev }
+      games.forEach((game) => {
+        const reason = game?.votes?.[user.uid]?.reason || ''
+        if (typeof next[game.id] === 'undefined') next[game.id] = reason
+      })
+      return next
+    })
+  }, [games, user])
 
   const handleGameField = (field) => (event) => {
     setGameForm((prev) => ({ ...prev, [field]: event.target.value }))
@@ -127,20 +144,26 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
     }
   }
 
-  const handleVote = async (gameId, value) => {
+  const handleVote = async (gameId, value, reason = '') => {
     if (!user) return
     setGamesError('')
     setVotingId(gameId)
     try {
       const displayName = user.displayName?.trim() || 'Spieler'
+      const normalizedReason = value === 'yes' ? null : (reason || '').trim() || null
       await updateDoc(doc(db, 'schedule', gameId), {
         [`votes.${user.uid}`]: {
           status: value,
           name: displayName,
           email: user.email || null,
+          reason: normalizedReason,
           updatedAt: serverTimestamp(),
         },
       })
+      setVoteReasonsByGame((prev) => ({
+        ...prev,
+        [gameId]: normalizedReason || '',
+      }))
     } catch (err) {
       console.error(err)
       setGamesError('Abstimmung fehlgeschlagen.')
@@ -385,6 +408,20 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
     }
   }
 
+  const handleVoteReasonChange = (gameId, value) => {
+    setVoteReasonsByGame((prev) => ({
+      ...prev,
+      [gameId]: value,
+    }))
+  }
+
+  const toggleVoteDetails = (gameId, status) => {
+    setOpenVoteDetailsByGame((prev) => ({
+      ...prev,
+      [gameId]: prev[gameId] === status ? '' : status,
+    }))
+  }
+
   const toggleGameDetails = (gameId) => {
     setOpenGameId((prev) => (prev === gameId ? '' : gameId))
   }
@@ -568,8 +605,15 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
               const values = Object.values(votes)
               const yesList = values.filter((v) => v?.status === 'yes')
               const noList = values.filter((v) => v?.status === 'no')
+              const maybeList = values.filter((v) => v?.status === 'maybe')
               const userVote = user ? votes[user.uid]?.status : null
+              const savedUserVoteReason = game?.votes?.[user?.uid || '']?.reason || ''
+              const userVoteReason =
+                typeof voteReasonsByGame[game.id] === 'string'
+                  ? voteReasonsByGame[game.id]
+                  : savedUserVoteReason
               const isEditing = editingGameId === game.id
+              const openVoteDetails = openVoteDetailsByGame[game.id] || ''
               return (
                 <div
                   key={game.id}
@@ -793,7 +837,8 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                             disabled={!user || votingId === game.id || isVotingClosed(game)}
                             onClick={(e) => {
                               e.stopPropagation()
-                              handleVote(game.id, 'maybe')
+                              const nextReason = userVote === 'no' ? '' : (voteReasonsByGame[game.id] || '')
+                              handleVote(game.id, 'maybe', nextReason)
                             }}
                             className={`rounded-full px-4 py-2 text-lg font-semibold transition ${
                               userVote === 'maybe'
@@ -808,7 +853,8 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                             disabled={!user || votingId === game.id || isVotingClosed(game)}
                             onClick={(e) => {
                               e.stopPropagation()
-                              handleVote(game.id, 'no')
+                              const nextReason = userVote === 'maybe' ? '' : (voteReasonsByGame[game.id] || '')
+                              handleVote(game.id, 'no', nextReason)
                             }}
                             className={`rounded-full px-4 py-2 text-lg font-semibold transition ${
                               userVote === 'no'
@@ -846,6 +892,35 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                         </div>
                       </div>
                     )}
+
+                    {user && !isVotingClosed(game) && (userVote === 'maybe' || userVote === 'no') ? (
+                      <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                        <label className="flex flex-col gap-2 text-sm text-slate-200/90">
+                          {userVote === 'maybe' ? 'Grund für Vielleicht' : 'Grund für Absage'}
+                          <textarea
+                            value={userVoteReason}
+                            onChange={(e) => handleVoteReasonChange(game.id, e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            rows="3"
+                            placeholder="Optionalen Grund eintragen..."
+                            className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none transition focus:border-sky-300 focus:ring-2 focus:ring-sky-400/40"
+                          />
+                        </label>
+                        <div className="mt-3 flex justify-end">
+                          <button
+                            type="button"
+                            disabled={!user || votingId === game.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleVote(game.id, userVote, voteReasonsByGame[game.id] || '')
+                            }}
+                            className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {votingId === game.id ? 'Speichert...' : 'Grund speichern'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
 
                     {openGameId === game.id ? (
                       <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-slate-200/90">
@@ -930,13 +1005,15 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                           </div>
                         </div>
                         <div className="space-y-3">
-                          <div className="rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs text-amber-50">
+                          <button
+                            type="button"
+                            onClick={() => toggleVoteDetails(game.id, 'maybe')}
+                            className="w-full rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-left text-xs text-amber-50"
+                          >
                             <p className="font-semibold">Vielleicht</p>
                             <div className="mt-2 flex flex-wrap gap-2">
-                              {values.filter((v) => v?.status === 'maybe').length
-                                ? values
-                                    .filter((v) => v?.status === 'maybe')
-                                    .map((v) => {
+                              {maybeList.length
+                                ? maybeList.map((v) => {
                                       const resolvedName =
                                         v?.email && user?.email && v.email === user.email && user.displayName
                                           ? user.displayName
@@ -967,8 +1044,55 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                                     })
                                 : '-'}
                             </div>
-                          </div>
-                          <div className="rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-xs text-red-100">
+                          </button>
+                          {openVoteDetails === 'maybe' ? (
+                            <div className="rounded-xl border border-amber-400/25 bg-amber-500/10 p-4 text-xs text-amber-50">
+                              <p className="font-semibold">Gründe für Vielleicht</p>
+                              <div className="mt-3 grid gap-3">
+                                {maybeList.length
+                                  ? maybeList.map((v) => {
+                                      const resolvedName =
+                                        v?.email && user?.email && v.email === user.email && user.displayName
+                                          ? user.displayName
+                                          : v?.name
+                                      const label = resolvedName || 'Spieler'
+                                      const match = playerProfiles.find(
+                                        (p) => normalizeName(p?.name) === normalizeName(resolvedName),
+                                      )
+                                      return (
+                                        <div
+                                          key={`detail-${v?.email || v?.name}-${v?.status}`}
+                                          className="flex items-start gap-3 rounded-lg border border-amber-300/20 bg-black/10 p-3"
+                                        >
+                                          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-amber-400/20 text-xs font-bold text-amber-50">
+                                            {match?.photo ? (
+                                              <img
+                                                src={match.photo}
+                                                alt={label}
+                                                className="h-full w-full object-cover"
+                                              />
+                                            ) : (
+                                              (label || '?').slice(0, 1).toUpperCase()
+                                            )}
+                                          </span>
+                                          <div className="min-w-0">
+                                            <p className="font-semibold text-amber-50">{label}</p>
+                                            <p className="mt-1 whitespace-pre-wrap break-words text-amber-100/90">
+                                              {v?.reason || 'Kein Grund angegeben.'}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )
+                                    })
+                                  : <p>-</p>}
+                              </div>
+                            </div>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => toggleVoteDetails(game.id, 'no')}
+                            className="w-full rounded-xl border border-red-400/20 bg-red-500/10 p-3 text-left text-xs text-red-100"
+                          >
                             <p className="font-semibold">Nicht dabei</p>
                             <div className="mt-2 flex flex-wrap gap-2">
                               {noList.length
@@ -982,28 +1106,71 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                                       (p) => normalizeName(p?.name) === normalizeName(resolvedName),
                                     )
                                     return (
-                                      <span
-                                        key={`${v?.email || v?.name}-${v?.status}`}
-                                        className="inline-flex flex-col items-center gap-1 text-[10px] font-semibold text-red-100"
-                                      >
-                                        <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-red-400/20 text-xs font-bold text-red-100">
-                                          {match?.photo ? (
-                                            <img
-                                              src={match.photo}
-                                              alt={label}
-                                              className="h-full w-full object-cover"
-                                            />
-                                          ) : (
-                                            (label || '?').slice(0, 1).toUpperCase()
-                                          )}
-                                        </span>
-                                        <span className="max-w-[120px] truncate">{label}</span>
+                                    <span
+                                      key={`${v?.email || v?.name}-${v?.status}`}
+                                      className="inline-flex flex-col items-center gap-1 text-[10px] font-semibold text-red-100"
+                                    >
+                                      <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-red-400/20 text-xs font-bold text-red-100">
+                                        {match?.photo ? (
+                                          <img
+                                            src={match.photo}
+                                            alt={label}
+                                            className="h-full w-full object-cover"
+                                          />
+                                        ) : (
+                                          (label || '?').slice(0, 1).toUpperCase()
+                                        )}
                                       </span>
-                                    )
-                                  })
+                                      <span className="max-w-[120px] truncate">{label}</span>
+                                    </span>
+                                  )
+                                })
                                 : '-'}
                             </div>
-                          </div>
+                          </button>
+                          {openVoteDetails === 'no' ? (
+                            <div className="rounded-xl border border-red-400/25 bg-red-500/10 p-4 text-xs text-red-100">
+                              <p className="font-semibold">Gründe für Nicht dabei</p>
+                              <div className="mt-3 grid gap-3">
+                                {noList.length
+                                  ? noList.map((v) => {
+                                      const resolvedName =
+                                        v?.email && user?.email && v.email === user.email && user.displayName
+                                          ? user.displayName
+                                          : v?.name
+                                      const label = resolvedName || 'Spieler'
+                                      const match = playerProfiles.find(
+                                        (p) => normalizeName(p?.name) === normalizeName(resolvedName),
+                                      )
+                                      return (
+                                        <div
+                                          key={`detail-${v?.email || v?.name}-${v?.status}`}
+                                          className="flex items-start gap-3 rounded-lg border border-red-300/20 bg-black/10 p-3"
+                                        >
+                                          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-red-400/20 text-xs font-bold text-red-100">
+                                            {match?.photo ? (
+                                              <img
+                                                src={match.photo}
+                                                alt={label}
+                                                className="h-full w-full object-cover"
+                                              />
+                                            ) : (
+                                              (label || '?').slice(0, 1).toUpperCase()
+                                            )}
+                                          </span>
+                                          <div className="min-w-0">
+                                            <p className="font-semibold text-red-100">{label}</p>
+                                            <p className="mt-1 whitespace-pre-wrap break-words text-red-100/90">
+                                              {v?.reason || 'Kein Grund angegeben.'}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )
+                                    })
+                                  : <p>-</p>}
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     ) : null}
@@ -1204,4 +1371,3 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
 
 
 export default SchedulePage
-
