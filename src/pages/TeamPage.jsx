@@ -44,7 +44,7 @@ const TeamPage = ({ isAdmin }) => {
     event.preventDefault()
     setPlayersError('')
     if (!isAdmin) {
-      setPlayersError('Nur Admins koennen Profile anlegen.')
+      setPlayersError('Nur Admins können Profile anlegen.')
       return
     }
     if (!playerForm.name.trim()) {
@@ -52,11 +52,11 @@ const TeamPage = ({ isAdmin }) => {
       return
     }
     if (!playerForm.position) {
-      setPlayersError('Bitte Position waehlen.')
+      setPlayersError('Bitte Position wählen.')
       return
     }
     if (playerForm.position === 'staff' && !playerForm.staffRole.trim()) {
-      setPlayersError('Bitte Rolle fuer Trainerstab auswaehlen.')
+      setPlayersError('Bitte Rolle für Trainerstab auswählen.')
       return
     }
     setSavingPlayer(true)
@@ -98,11 +98,11 @@ const TeamPage = ({ isAdmin }) => {
 
   const handleDeletePlayer = async (playerId) => {
     if (!isAdmin) {
-      setPlayersError('Nur Admins koennen Profile loeschen.')
+      setPlayersError('Nur Admins können Profile löschen.')
       return
     }
     if (!playerId) return
-    const confirmDelete = window.confirm('Profil wirklich loeschen?')
+    const confirmDelete = window.confirm('Profil wirklich löschen?')
     if (!confirmDelete) return
     setPlayersError('')
     setDeletingPlayerId(playerId)
@@ -110,7 +110,7 @@ const TeamPage = ({ isAdmin }) => {
       await deleteDoc(doc(db, 'playerprofiles', playerId))
     } catch (err) {
       console.error(err)
-      setPlayersError('Profil konnte nicht geloescht werden.')
+      setPlayersError('Profil konnte nicht gelöscht werden.')
     } finally {
       setDeletingPlayerId('')
     }
@@ -217,7 +217,7 @@ const TeamPage = ({ isAdmin }) => {
                     onChange={handlePlayerChange('staffRole')}
                     className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
                   >
-                    <option value="">Bitte waehlen</option>
+                    <option value="">Bitte wählen</option>
                     <option value="Trainer">Trainer</option>
                     <option value="Co-Trainer">Co-Trainer</option>
                     <option value="Assistent">Assistent</option>
@@ -235,7 +235,7 @@ const TeamPage = ({ isAdmin }) => {
                   className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/30 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-white"
                 />
                 {playerImage ? (
-                  <span className="text-xs text-emerald-200/90">Ausgewaehlt: {playerImage.name}</span>
+                  <span className="text-xs text-emerald-200/90">Ausgewählt: {playerImage.name}</span>
                 ) : (
                   <span className="text-xs text-slate-400">Optional, PNG oder JPG</span>
                 )}
@@ -305,19 +305,20 @@ const TeamPage = ({ isAdmin }) => {
                             disabled={deletingPlayerId === player.id}
                             className="absolute right-3 top-3 z-10 rounded-full border border-white/20 bg-slate-900/80 px-3 py-1 text-[11px] font-semibold text-white shadow hover:border-red-400/70 hover:text-red-100 disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {deletingPlayerId === player.id ? '...' : 'Loeschen'}
+                            {deletingPlayerId === player.id ? '...' : 'Löschen'}
                           </button>
                         ) : null}
                         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/30 to-slate-900/80" />
                         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-4 py-3">
                           <div>
-                            {player.number ? (
-                              <p className="text-sm font-bold text-emerald-200 drop-shadow">#{player.number}</p>
-                            ) : null}
                             <p className="text-lg font-semibold leading-tight text-white">{player.name || 'Unbekannt'}</p>
                           </div>
                           <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-emerald-200">
-                            {player.position === 'staff' ? player.staffRole || 'Staff' : group.label}
+                            {player.position === 'staff'
+                              ? player.staffRole || 'Staff'
+                              : player.number
+                                ? `#${player.number}`
+                                : '--'}
                           </span>
                         </div>
                       </div>

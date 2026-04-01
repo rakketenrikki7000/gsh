@@ -5,11 +5,41 @@ import { computeStandings, formatDate, useI18n } from '../app/shared'
 const PublicTablePage = ({ matches, activeTable }) => {
   const { t } = useI18n()
   const [publicFilter, setPublicFilter] = useState('all')
+  const [matchdayFilter, setMatchdayFilter] = useState('all')
+  const toMatchdayValue = (value) => {
+    if (!value) return ''
+    if (typeof value === 'string') return value
+    if (value?.toDate) return value.toDate().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' })
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' })
+  }
   const publicMatches = useMemo(() => {
     if (!activeTable) return []
     return matches.filter((match) => match.tableId === activeTable.id)
   }, [matches, activeTable])
-  const publicLatestMatches = useMemo(() => {
+  const matchdayOptions = useMemo(() => {
+    const getMatchTime = (match) => {
+      const sortValue = match?.date
+      if (!sortValue) return 0
+      if (sortValue?.toDate) return sortValue.toDate().getTime()
+      const parsed = new Date(sortValue)
+      return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime()
+    }
+    const seen = new Map()
+    ;[...publicMatches]
+      .sort((a, b) => getMatchTime(b) - getMatchTime(a))
+      .forEach((match) => {
+        const key = toMatchdayValue(match.date)
+        if (key && !seen.has(key)) {
+          seen.set(key, {
+            value: key,
+            label: formatDate(match.date),
+          })
+        }
+      })
+    return Array.from(seen.values())
+  }, [publicMatches])
+  const publicLiveFeedMatches = useMemo(() => {
     const getMatchTime = (match) => {
       const sortValue = match?.createdAt || match?.date
       if (!sortValue) return 0
@@ -17,8 +47,10 @@ const PublicTablePage = ({ matches, activeTable }) => {
       const parsed = new Date(sortValue)
       return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime()
     }
-    return [...publicMatches].sort((a, b) => getMatchTime(b) - getMatchTime(a)).slice(0, 6)
-  }, [publicMatches])
+    const sorted = [...publicMatches].sort((a, b) => getMatchTime(b) - getMatchTime(a))
+    if (matchdayFilter === 'all') return sorted.slice(0, 6)
+    return sorted.filter((match) => toMatchdayValue(match.date) === matchdayFilter)
+  }, [publicMatches, matchdayFilter])
   const standingsView = useMemo(
     () => computeStandings(publicMatches, publicFilter),
     [publicMatches, publicFilter],
@@ -36,12 +68,31 @@ const PublicTablePage = ({ matches, activeTable }) => {
       </header>
       <Card title={t('live_feed')} kicker="Live Feed" id="public-results" className="mb-8">
         <div className="space-y-3">
-          {publicLatestMatches.length === 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/70">Spieltag</p>
+            <select
+              value={matchdayFilter}
+              onChange={(event) => setMatchdayFilter(event.target.value)}
+              className="rounded-full border border-white/10 bg-slate-800/80 px-4 py-2 text-xs font-semibold text-white outline-none transition hover:border-sky-300/60 focus:border-sky-300 focus:ring-2 focus:ring-sky-400/40"
+            >
+              <option value="all">Alle Spieltage</option>
+              {matchdayOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {publicLiveFeedMatches.length === 0 ? (
             <p className="text-sm text-slate-300/70">
-              {activeTable ? t('live_feed_empty') : t('live_feed_select')}
+              {activeTable
+                ? matchdayFilter === 'all'
+                  ? t('live_feed_empty')
+                  : 'Keine Spiele fuer diesen Spieltag gefunden.'
+                : t('live_feed_select')}
             </p>
           ) : (
-            publicLatestMatches.map((match) => {
+            publicLiveFeedMatches.map((match) => {
               const isGsh = match.homeTeam === 'Gut Schluck Hauset' || match.awayTeam === 'Gut Schluck Hauset'
               return (
                 <div

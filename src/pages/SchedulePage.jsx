@@ -103,7 +103,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
       return
     }
     if (!gameForm.date) {
-      setGamesError('Bitte Datum auswaehlen.')
+      setGamesError('Bitte Datum auswählen.')
       return
     }
     setSavingGame(true)
@@ -346,7 +346,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
       return
     }
     if (!editForm.date) {
-      setGamesError('Bitte Datum auswaehlen.')
+      setGamesError('Bitte Datum auswählen.')
       return
     }
     setSavingEdit(true)
@@ -371,7 +371,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
 
   const handleDeleteGame = async (gameId) => {
     if (!isAdmin || !gameId) return
-    const ok = window.confirm('Spiel wirklich loeschen?')
+    const ok = window.confirm('Spiel wirklich löschen?')
     if (!ok) return
     setGamesError('')
     setDeletingGameId(gameId)
@@ -379,7 +379,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
       await deleteDoc(doc(db, 'schedule', gameId))
     } catch (err) {
       console.error(err)
-      setGamesError('Konnte Spiel nicht loeschen.')
+      setGamesError('Konnte Spiel nicht löschen.')
     } finally {
       setDeletingGameId('')
     }
@@ -411,7 +411,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                   className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
                   required
                 >
-                  <option value="">Bitte waehlen</option>
+                  <option value="">Bitte wählen</option>
                     {TEAM_OPTIONS.filter((team) => team !== 'Gut Schluck Hauset').map((team) => (
                       <option key={team} value={team}>
                         {team}
@@ -427,7 +427,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                   className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
                   required
                 >
-                  <option value="">Bitte waehlen</option>
+                  <option value="">Bitte wählen</option>
                   {STADIUM_OPTIONS.map((stadium) => (
                     <option key={stadium} value={stadium}>
                       {stadium}
@@ -443,7 +443,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                   className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
                 >
                   <option value="home">Heim</option>
-                  <option value="away">Auswaerts</option>
+                  <option value="away">Auswärts</option>
                 </select>
               </label>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -545,7 +545,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
               <button
                 type="submit"
                 disabled={savingGame}
-                className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {savingGame ? 'Speichert...' : 'Spiel erstellen'}
               </button>
@@ -573,7 +573,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
               return (
                 <div
                   key={game.id}
-                  className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition hover:border-emerald-400/30"
+                  className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 transition hover:border-sky-300/40"
                 >
                     {isEditing ? (
                       <form className="space-y-3" onSubmit={handleUpdateGame}>
@@ -586,7 +586,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                               className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
                               required
                             >
-                              <option value="">Bitte waehlen</option>
+                              <option value="">Bitte wählen</option>
                               {TEAM_OPTIONS.filter((team) => team !== 'Gut Schluck Hauset').map((team) => (
                                 <option key={team} value={team}>
                                   {team}
@@ -602,7 +602,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                               className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
                               required
                             >
-                              <option value="">Bitte waehlen</option>
+                              <option value="">Bitte wählen</option>
                               {STADIUM_OPTIONS.map((stadium) => (
                                 <option key={stadium} value={stadium}>
                                   {stadium}
@@ -620,7 +620,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                               className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-500/40"
                             >
                               <option value="home">Heim</option>
-                              <option value="away">Auswaerts</option>
+                              <option value="away">Auswärts</option>
                             </select>
                           </label>
                           <label className="flex flex-col gap-2 text-sm text-slate-200/80">
@@ -715,14 +715,14 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                           <button
                             type="submit"
                             disabled={savingEdit}
-                            className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {savingEdit ? 'Speichert...' : 'Speichern'}
                           </button>
                           <button
                             type="button"
                             onClick={cancelEditGame}
-                            className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-700"
+                            className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-4 py-2 text-xs font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:bg-sky-300"
                           >
                             Abbrechen
                           </button>
@@ -783,7 +783,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                             className={`rounded-full px-4 py-2 text-lg font-semibold transition ${
                               userVote === 'yes'
                                 ? 'bg-emerald-500/20 text-emerald-50 border border-emerald-400/60'
-                                : 'border border-white/10 bg-white/5 text-slate-200 hover:border-emerald-300/50 hover:text-emerald-50'
+                                : 'border border-white/10 bg-white/5 text-slate-200 hover:border-sky-300/60 hover:text-sky-100'
                             }`}
                           >
                             👍
@@ -826,7 +826,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                                   e.stopPropagation()
                                   startEditGame(game)
                                 }}
-                                className="rounded-full border border-emerald-400/50 bg-primary px-3 py-1 text-[11px] font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-700"
+                                className="rounded-full border border-emerald-400/50 bg-primary px-3 py-1 text-[11px] font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:bg-sky-300"
                               >
                                 Bearbeiten
                               </button>
@@ -839,7 +839,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                                 }}
                                 className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-[11px] font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                               >
-                                {deletingGameId === game.id ? '...' : 'Loeschen'}
+                                {deletingGameId === game.id ? '...' : 'Löschen'}
                               </button>
                             </div>
                           ) : null}
@@ -1174,7 +1174,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                                   className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                                     getLineupFormation(game.id) === opt.value
                                       ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-50'
-                                      : 'border-white/10 bg-white/5 text-slate-200 hover:border-emerald-300/50'
+                                      : 'border-white/10 bg-white/5 text-slate-200 hover:border-sky-300/60'
                                   }`}
                                 >
                                   {opt.label}
@@ -1186,7 +1186,7 @@ const SchedulePage = ({ user, isAdmin, playerProfiles = [] }) => {
                               onClick={() => resetLineupAssignments(game.id)}
                               className="rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20"
                             >
-                              Zuruecksetzen
+                              Zurücksetzen
                             </button>
                           </div>
                         </div>

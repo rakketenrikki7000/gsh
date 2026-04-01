@@ -60,7 +60,7 @@ const NewsPage = ({ isAdmin }) => {
       return
     }
     if (!newsForm.date) {
-      setNewsError('Bitte ein Datum auswaehlen.')
+      setNewsError('Bitte ein Datum auswählen.')
       return
     }
     if (!newsForm.body.trim()) {
@@ -104,7 +104,7 @@ const NewsPage = ({ isAdmin }) => {
 
   const handleDeleteNews = async (newsId) => {
     if (!newsId) return
-    const ok = window.confirm('Diese News wirklich loeschen?')
+    const ok = window.confirm('Diese News wirklich löschen?')
     if (!ok) return
     setNewsError('')
     setDeletingNewsId(newsId)
@@ -112,7 +112,7 @@ const NewsPage = ({ isAdmin }) => {
       await deleteDoc(doc(db, 'news', newsId))
     } catch (err) {
       console.error(err)
-      setNewsError('Konnte News nicht loeschen.')
+      setNewsError('Konnte News nicht löschen.')
     } finally {
       setDeletingNewsId('')
     }
@@ -169,7 +169,7 @@ const NewsPage = ({ isAdmin }) => {
                 className="w-full rounded-lg border border-white/10 bg-slate-800/80 px-3 py-2 text-white file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/30 file:px-3 file:py-1 file:text-sm file:font-semibold file:text-white"
               />
               {newsImage ? (
-                <span className="text-xs text-emerald-200/90">Ausgewaehlt: {newsImage.name}</span>
+                <span className="text-xs text-emerald-200/90">Ausgewählt: {newsImage.name}</span>
               ) : (
                 <span className="text-xs text-slate-400">Optional, PNG oder JPG</span>
               )}
@@ -298,7 +298,7 @@ const NewsPage = ({ isAdmin }) => {
                 onClick={() => handleDeleteNews(item.id)}
                 className="rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {deletingNewsId === item.id ? '...' : 'Loeschen'}
+                {deletingNewsId === item.id ? '...' : 'Löschen'}
               </button>
             </div>
           ) : null}
@@ -385,7 +385,7 @@ const NewsDetailPage = ({ isAdmin }) => {
       return
     }
     if (!newsForm.date) {
-      setNewsError('Bitte ein Datum auswaehlen.')
+      setNewsError('Bitte ein Datum auswählen.')
       return
     }
     if (!newsForm.body.trim()) {
@@ -428,7 +428,7 @@ const NewsDetailPage = ({ isAdmin }) => {
 
   const handleDeleteNews = async () => {
     if (!newsId) return
-    const ok = window.confirm('Diese News wirklich loeschen?')
+    const ok = window.confirm('Diese News wirklich löschen?')
     if (!ok) return
     setNewsError('')
     setDeletingNews(true)
@@ -437,7 +437,7 @@ const NewsDetailPage = ({ isAdmin }) => {
       navigate('/news')
     } catch (err) {
       console.error(err)
-      setNewsError('Konnte News nicht loeschen.')
+      setNewsError('Konnte News nicht löschen.')
       setDeletingNews(false)
     }
   }
@@ -461,7 +461,7 @@ const NewsDetailPage = ({ isAdmin }) => {
             to="/news"
             className="mt-4 inline-flex items-center justify-center rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:border-sky-300/60 hover:text-sky-100"
           >
-            Zurueck zu den News
+            Zurück zu den News
           </Link>
         </Card>
       </div>
@@ -564,7 +564,7 @@ const NewsDetailPage = ({ isAdmin }) => {
                   onClick={handleDeleteNews}
                   className="inline-flex items-center justify-center rounded-full border border-red-500/40 bg-red-500/10 px-5 py-2 text-sm font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {deletingNews ? 'Loescht...' : 'Loeschen'}
+                  {deletingNews ? 'Löscht...' : 'Löschen'}
                 </button>
               </div>
             </form>
@@ -614,7 +614,7 @@ const NewsDetailPage = ({ isAdmin }) => {
                 to="/news"
                 className="inline-flex items-center justify-center rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-white transition hover:border-sky-300/60 hover:text-sky-100"
               >
-                Zurueck zu den News
+                Zurück zu den News
               </Link>
               {isAdmin ? (
                 <button

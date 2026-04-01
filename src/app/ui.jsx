@@ -40,7 +40,7 @@ const SponsorMarquee = () => (
               href={logo.href}
               target="_blank"
               rel="noreferrer"
-              className="flex h-16 w-44 items-center justify-center rounded-xl bg-white/5 px-4 py-2 shadow-inner transition hover:-translate-y-0.5 hover:scale-[1.06] hover:bg-white/15 hover:shadow-[0_0_28px_rgba(56,189,248,0.45)] hover:border hover:border-emerald-400/60"
+              className="flex h-16 w-44 items-center justify-center rounded-xl bg-white/5 px-4 py-2 shadow-inner transition hover:-translate-y-0.5 hover:scale-[1.06] hover:bg-white/15 hover:shadow-[0_0_28px_rgba(56,189,248,0.45)] hover:border hover:border-sky-300/60"
             >
               <img
                 src={logo.src}
@@ -52,7 +52,7 @@ const SponsorMarquee = () => (
           ) : (
             <div
               key={`${logo.alt}-${idx}`}
-              className="flex h-16 w-44 items-center justify-center rounded-xl bg-white/5 px-4 py-2 shadow-inner transition hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)] hover:border hover:border-emerald-400/40"
+              className="flex h-16 w-44 items-center justify-center rounded-xl bg-white/5 px-4 py-2 shadow-inner transition hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)] hover:border hover:border-sky-300/60"
             >
               <img
                 src={logo.src}
@@ -119,7 +119,7 @@ const TopNav = ({ user, userAvatar, onLogout, navItems }) => {
           <img
             src="/gs-hauset-logo.png"
             alt="GS Hauset Logo"
-            className="h-9 w-9 rounded-xl bg-white/10 p-1 object-contain shadow-lg shadow-emerald-500/30"
+            className="h-9 w-9 rounded-md object-contain"
             loading="lazy"
           />
           <div>
@@ -179,7 +179,7 @@ const TopNav = ({ user, userAvatar, onLogout, navItems }) => {
                   <button
                     type="button"
                     onClick={() => setMenuOpen((v) => !v)}
-                    className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-emerald-500 to-orange-400 text-sm font-bold text-slate-900"
+                    className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-slate-900"
                     aria-label="ProfilMenue"
                   >
                     {userAvatar ? (
@@ -221,10 +221,10 @@ const TopNav = ({ user, userAvatar, onLogout, navItems }) => {
                   <button
                     type="button"
                     onClick={() => setMenuOpen((v) => !v)}
-                    className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20"
+                    className="inline-flex items-center gap-2 rounded-full px-1 py-1 text-sm font-semibold text-white transition hover:-translate-y-0.5"
                     aria-label="ProfilMenue"
                   >
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-orange-400 text-sm font-bold text-slate-900">
+                    <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-slate-900">
                       {userAvatar ? (
                         <img
                           src={userAvatar}
@@ -325,7 +325,7 @@ const Footer = ({ user }) => {
           <img
             src="/gs-hauset-logo.png"
             alt="GS Hauset Logo"
-            className="h-8 w-8 rounded-xl bg-white/10 p-1 object-contain"
+            className="h-8 w-8 rounded-md object-contain"
             loading="lazy"
           />
           <div className="leading-none">
@@ -369,5 +369,3 @@ const Footer = ({ user }) => {
 }
 
 export { Card, Footer, GradientBadge, PlayerCard, PrivateRoute, SponsorMarquee, TopNav }
-
-

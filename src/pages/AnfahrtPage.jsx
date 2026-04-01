@@ -7,7 +7,7 @@ const AnfahrtPage = () => (
     <header className="mb-8">
       <GradientBadge>Anfahrt</GradientBadge>
       <h1 className="mt-3 font-display text-4xl font-semibold text-white">So findest du uns</h1>
-      <p className="text-slate-300/80">Adresse, Parken und Karte fuer den schnellsten Weg zum GSH.</p>
+      <p className="text-slate-300/80">Adresse, Parken und Karte für den schnellsten Weg zum GSH.</p>
     </header>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       <Card title="Adresse" kicker="Gut Schluck Hauset Sportplatz">
@@ -18,14 +18,14 @@ const AnfahrtPage = () => (
               <br />
               4730 Hauset
             </p>
-            <p className="text-xs text-slate-400">Parkplaetze direkt vor dem Platz - Buslinie 722 bis "Hauset Dorf"</p>
+            <p className="text-xs text-slate-400">Parkplätze direkt vor dem Platz - Buslinie 722 bis "Hauset Dorf"</p>
             <a
               href="https://maps.google.com/?q=Kirchstra%C3%9Fe+97,+4730+Hauset"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700"
             >
-              In Google Maps oeffnen
+              In Google Maps öffnen
             </a>
           </div>
           <div className="w-full max-w-lg md:ml-auto">
@@ -38,7 +38,7 @@ const AnfahrtPage = () => (
               playsInline
               controls
             >
-              Dein Browser unterstuetzt kein Video-Tag.
+              Dein Browser unterstützt kein Video-Tag.
             </video>
           </div>
         </div>

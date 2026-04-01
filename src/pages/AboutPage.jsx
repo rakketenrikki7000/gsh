@@ -39,10 +39,10 @@ const AboutPage = () => (
     <div className="absolute inset-x-0 top-0 -z-10 h-72 bg-gradient-to-b from-emerald-500/20 via-transparent to-transparent blur-3xl" />
 
     <header className="mx-auto mb-12 max-w-4xl text-center">
-      <GradientBadge>Ueber Gut Schluck Hauset</GradientBadge>
+      <GradientBadge>Über Gut Schluck Hauset</GradientBadge>
       <h1 className="mt-4 font-display text-4xl font-semibold text-white sm:text-5xl">Tradition trifft Zukunft</h1>
       <p className="mt-4 text-lg text-slate-200/80">
-        Seit 1973 stehen wir fuer Leidenschaft, Gemeinschaft und die Liebe zum Fussball.
+        Seit 1973 stehen wir für Leidenschaft, Gemeinschaft und die Liebe zum Fussball.
         <br />
         Was als Dorfmannschaft begann,
         ist heute ein stolzer Verein mit einer grossen Familie.
@@ -62,15 +62,15 @@ const AboutPage = () => (
       <div className="space-y-4 rounded-3xl border border-white/10 bg-slate-900/70 p-6 shadow-soft lg:col-span-2">
         <h2 className="text-2xl font-semibold text-white">Unsere Geschichte</h2>
         <p className="text-sm text-slate-200/90">
-          Gegruendet 1973 von fussballbegeisterten Menschen aus Hauset, entwickelte sich Gut Schluck Hauset zu einem der
+          Gegründet 1973 von fussballbegeisterten Menschen aus Hauset, entwickelte sich Gut Schluck Hauset zu einem der
           respektiertesten Vereine der Region.
         </p>
         <p className="text-sm text-slate-200/90">
           Mit mehr als 100 Mitgliedern von Jugend bis Senioren leben wir Gemeinschaftsgeist, Fairplay und die Werte, die
-          uns seit Jahrzehnten praegen.
+          uns seit Jahrzehnten prägen.
         </p>
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-50">
-          Mehr als Fussball - wir sind eine Familie, die zusammenhaelt und gemeinsam traeumt.
+          Mehr als Fussball - wir sind eine Familie, die zusammenhält und gemeinsam träumt.
         </div>
       </div>
     </div>
@@ -78,8 +78,8 @@ const AboutPage = () => (
     <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
       {[
         { icon: <CommunityIcon />, title: 'Gemeinschaft', body: 'Wir sind mehr als ein Verein - wir sind eine Familie' },
-        { icon: <TraditionIcon />, title: 'Tradition', body: 'Ueber 50 Jahre Vereinsgeschichte praegen unsere Identitaet' },
-        { icon: <YouthIcon />, title: 'Nachwuchs', body: 'Foerderung junger Talente' },
+        { icon: <TraditionIcon />, title: 'Tradition', body: 'Über 50 Jahre Vereinsgeschichte prägen unsere Identität' },
+        { icon: <YouthIcon />, title: 'Nachwuchs', body: 'Förderung junger Talente' },
         { icon: <FairplayIcon />, title: 'Fairplay', body: 'Respekt und Fairness sind die Grundpfeiler unseres Sports' },
       ].map((item) => (
         <div

@@ -242,6 +242,10 @@ body {
   border-color: rgba(var(--gsh-blue-shadow), 0.45);
 }
 
+.bg-grid-radial {
+  background-image: none !important;
+}
+
 * {
   box-sizing: border-box;
 }

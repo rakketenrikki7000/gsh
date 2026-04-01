@@ -184,11 +184,11 @@ const GalleryPage = ({ isAdmin }) => {
       return
     }
     if (!selectedEventId) {
-      setUploadError('Bitte zuerst ein Event anlegen oder auswaehlen.')
+      setUploadError('Bitte zuerst ein Event anlegen oder auswählen.')
       return
     }
     if (!selectedFiles.length) {
-      setUploadError('Bitte mindestens ein Bild waehlen.')
+      setUploadError('Bitte mindestens ein Bild auswählen.')
       return
     }
     setUploading(true)
@@ -219,7 +219,7 @@ const GalleryPage = ({ isAdmin }) => {
       return
     }
     if (!selectedEventId) {
-      setEventError('Kein Event ausgewaehlt.')
+      setEventError('Kein Event ausgewählt.')
       return
     }
     const name = editEventName.trim()
@@ -311,7 +311,7 @@ const GalleryPage = ({ isAdmin }) => {
                 type="button"
                 onClick={handleCreateEvent}
                 disabled={creatingEvent}
-                className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {creatingEvent ? t('gallery_creating') : t('gallery_create')}
               </button>
@@ -363,7 +363,7 @@ const GalleryPage = ({ isAdmin }) => {
               <button
                 type="submit"
                 disabled={uploading}
-                className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-sky-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {uploading ? t('gallery_uploading') : t('gallery_save_images')}
               </button>
@@ -383,7 +383,7 @@ const GalleryPage = ({ isAdmin }) => {
                   key={evt.id}
                   type="button"
                   onClick={() => setSelectedEventId(evt.id)}
-                  className="rounded-3xl border border-white/10 bg-slate-900/70 px-5 py-5 text-left shadow-sm transition hover:border-emerald-300/35 hover:bg-white/5"
+                  className="rounded-3xl border border-white/10 bg-slate-900/70 px-5 py-5 text-left shadow-sm transition hover:border-sky-300/50 hover:bg-white/5"
                 >
                   <p className="text-lg font-semibold text-white leading-snug">{evt.name || evt.id}</p>
                 </button>
@@ -412,7 +412,7 @@ const GalleryPage = ({ isAdmin }) => {
                       type="button"
                       onClick={handleRenameEvent}
                       disabled={savingEventName}
-                      className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50 disabled:opacity-60"
+                      className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-sky-300/60 hover:text-sky-100 disabled:opacity-60"
                     >
                       {savingEventName ? t('gallery_creating') : t('gallery_save')}
                     </button>
@@ -431,7 +431,7 @@ const GalleryPage = ({ isAdmin }) => {
                 <button
                   type="button"
                   onClick={() => setSelectedEventId('')}
-                  className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50"
+                  className="rounded-full border border-white/10 px-3 py-1 text-xs font-semibold text-white hover:border-sky-300/60 hover:text-sky-100"
                 >
                   {t('gallery_back')}
                 </button>
@@ -499,7 +499,7 @@ const GalleryPage = ({ isAdmin }) => {
           <button
             type="button"
             onClick={() => setLightboxIndex(null)}
-            className="absolute right-5 top-5 rounded-full border border-white/20 bg-slate-900/80 px-3 py-1 text-xs font-semibold text-white hover:border-emerald-300/50 hover:text-emerald-50"
+            className="absolute right-5 top-5 rounded-full border border-white/20 bg-slate-900/80 px-3 py-1 text-xs font-semibold text-white hover:border-sky-300/60 hover:text-sky-100"
           >
             Schliessen
           </button>
@@ -511,7 +511,7 @@ const GalleryPage = ({ isAdmin }) => {
                   event.stopPropagation()
                   showPrevImage()
                 }}
-                className="absolute left-5 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-slate-900/80 px-3 py-2 text-lg font-bold text-white hover:border-emerald-300/50 hover:text-emerald-50"
+                className="absolute left-5 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-slate-900/80 px-3 py-2 text-lg font-bold text-white hover:border-sky-300/60 hover:text-sky-100"
                 aria-label="Vorheriges Bild"
                 >
                   {'<'}
@@ -522,8 +522,8 @@ const GalleryPage = ({ isAdmin }) => {
                   event.stopPropagation()
                   showNextImage()
                 }}
-                className="absolute right-5 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-slate-900/80 px-3 py-2 text-lg font-bold text-white hover:border-emerald-300/50 hover:text-emerald-50"
-                aria-label="Naechstes Bild"
+                className="absolute right-5 top-1/2 -translate-y-1/2 rounded-full border border-white/20 bg-slate-900/80 px-3 py-2 text-lg font-bold text-white hover:border-sky-300/60 hover:text-sky-100"
+                aria-label="Nächstes Bild"
                 >
                   {'>'}
               </button>

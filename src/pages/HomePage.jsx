@@ -44,14 +44,14 @@ const HomePage = ({ user }) => {
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <Card title="Ein Verein mit Geschichte" kicker="Seit 1973" className="h-full">
         <p className="text-sm leading-7 text-slate-200/90">
-          Gut Schluck Hauset steht seit Jahrzehnten fuer Zusammenhalt, Leidenschaft und echten Dorf-Fussball in
+          Gut Schluck Hauset steht seit Jahrzehnten für Zusammenhalt, Leidenschaft und echten Dorf-Fussball in
           Ostbelgien. Aus einer engagierten Gemeinschaft entstanden, lebt der Verein heute von Menschen, die sich Woche
-          fuer Woche auf und neben dem Platz einsetzen.
+          für Woche auf und neben dem Platz einsetzen.
         </p>
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-2xl font-semibold text-white">1973</p>
-            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-emerald-200/70">Gruendung</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-emerald-200/70">Gründung</p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <p className="text-2xl font-semibold text-white">100+</p>
@@ -63,7 +63,7 @@ const HomePage = ({ user }) => {
             to="/ueber-uns"
              className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white shadow-inner transition hover:-translate-y-0.5 hover:border-sky-400/60 hover:bg-white/15 hover:text-sky-100 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)]"
           >
-            Mehr ueber den Verein
+            Mehr über den Verein
           </Link>
         </div>
       </Card>
@@ -87,7 +87,7 @@ const HomePage = ({ user }) => {
             <br />
             4730 Hauset
           </p>
-          <p className="text-slate-300/80">Parkplaetze direkt vor Ort, Buslinie 722 bis Hauset Dorf.</p>
+          <p className="text-slate-300/80">Parkplätze direkt vor Ort, Buslinie 722 bis Hauset Dorf.</p>
         </div>
         <div className="mt-4">
           <Link

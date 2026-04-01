@@ -28,6 +28,13 @@ const TablePage = ({
     const parsed = new Date(value).getTime()
     return Number.isNaN(parsed) ? 0 : parsed
   }
+  const toMatchdayValue = (value) => {
+    if (!value) return ''
+    if (typeof value === 'string') return value
+    if (value?.toDate) return value.toDate().toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' })
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleDateString('sv-SE', { timeZone: 'Europe/Berlin' })
+  }
 
   const [rankingFilter, setRankingFilter] = useState('all')
   const [notes, setNotes] = useState([])
@@ -45,19 +52,34 @@ const TablePage = ({
   const [tableDeleteError, setTableDeleteError] = useState('')
   const [deletingMatchId, setDeletingMatchId] = useState('')
   const [matchDeleteError, setMatchDeleteError] = useState('')
+  const [matchdayFilter, setMatchdayFilter] = useState('all')
 
   const activeMatches = useMemo(() => {
     if (!selectedTableId) return []
     return matches.filter((match) => !match.tableId || match.tableId === selectedTableId)
   }, [matches, selectedTableId])
 
-  const latestMatches = useMemo(
-    () =>
-      [...activeMatches]
-        .sort((a, b) => (toTime(b.createdAt || b.date) ?? 0) - (toTime(a.createdAt || a.date) ?? 0))
-        .slice(0, 6),
-    [activeMatches],
-  )
+  const matchdayOptions = useMemo(() => {
+    const seen = new Map()
+    ;[...activeMatches]
+      .sort((a, b) => (toTime(b.date) ?? 0) - (toTime(a.date) ?? 0))
+      .forEach((match) => {
+        const key = toMatchdayValue(match.date)
+        if (key && !seen.has(key)) {
+          seen.set(key, {
+            value: key,
+            label: formatDate(match.date),
+          })
+        }
+      })
+    return Array.from(seen.values())
+  }, [activeMatches])
+
+  const liveFeedMatches = useMemo(() => {
+    const sorted = [...activeMatches].sort((a, b) => (toTime(b.createdAt || b.date) ?? 0) - (toTime(a.createdAt || a.date) ?? 0))
+    if (matchdayFilter === 'all') return sorted.slice(0, 6)
+    return sorted.filter((match) => toMatchdayValue(match.date) === matchdayFilter)
+  }, [activeMatches, matchdayFilter])
 
   const standingsView = useMemo(
     () => computeStandings(activeMatches, rankingFilter),
@@ -105,7 +127,7 @@ const TablePage = ({
   const handleDeleteTable = async (tableId, label) => {
     if (!tableId || !onDeleteTable) return
     const ok = window.confirm(
-      `Tabelle "${label}" wirklich loeschen? Alle Spiele darin werden ebenfalls geloescht.`,
+      `Tabelle "${label}" wirklich löschen? Alle Spiele darin werden ebenfalls gelöscht.`,
     )
     if (!ok) return
     setTableDeleteError('')
@@ -114,7 +136,7 @@ const TablePage = ({
       await onDeleteTable(tableId)
     } catch (err) {
       console.error(err)
-      setTableDeleteError('Konnte Tabelle nicht loeschen.')
+      setTableDeleteError('Konnte Tabelle nicht löschen.')
     } finally {
       setDeletingTableId('')
     }
@@ -122,10 +144,10 @@ const TablePage = ({
 
   const handleDeleteMatch = async (matchId) => {
     if (!matchId) return
-    const ok = window.confirm('Dieses Ergebnis wirklich loeschen?')
+    const ok = window.confirm('Dieses Ergebnis wirklich löschen?')
     if (!ok) return
     if (!selectedTableId) {
-      setMatchDeleteError('Bitte zuerst eine Tabelle auswaehlen.')
+      setMatchDeleteError('Bitte zuerst eine Tabelle auswählen.')
       return
     }
     setMatchDeleteError('')
@@ -134,7 +156,7 @@ const TablePage = ({
       await deleteDoc(doc(db, 'tables', selectedTableId, 'matches', matchId))
     } catch (err) {
       console.error(err)
-      setMatchDeleteError('Konnte Ergebnis nicht loeschen.')
+      setMatchDeleteError('Konnte Ergebnis nicht löschen.')
     } finally {
       setDeletingMatchId('')
     }
@@ -176,7 +198,7 @@ const TablePage = ({
   }
 
   const handleDeleteNote = async (noteId) => {
-    const ok = window.confirm('Diese Anmerkung wirklich loeschen?')
+    const ok = window.confirm('Diese Anmerkung wirklich löschen?')
     if (!ok) return
     setNotesError('')
     setDeletingNoteId(noteId)
@@ -187,7 +209,7 @@ const TablePage = ({
       }
     } catch (err) {
       console.error(err)
-      setNotesError('Konnte Notiz nicht loeschen.')
+      setNotesError('Konnte Notiz nicht löschen.')
     } finally {
       setDeletingNoteId('')
     }
@@ -259,7 +281,7 @@ const TablePage = ({
                       onClick={() => handleDeleteTable(selectedTableId, activeTable.name)}
                       className="mt-3 inline-flex items-center justify-center rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-100 transition hover:border-red-400/70 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {deletingTableId === selectedTableId ? 'Loesche...' : t('admin_delete_table')}
+                      {deletingTableId === selectedTableId ? 'Lösche...' : t('admin_delete_table')}
                     </button>
                   ) : null}
                 </div>
@@ -413,12 +435,31 @@ const TablePage = ({
                   {matchDeleteError}
                 </p>
               ) : null}
-              {latestMatches.length === 0 ? (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200/70">Spieltag</p>
+                <select
+                  value={matchdayFilter}
+                  onChange={(event) => setMatchdayFilter(event.target.value)}
+                  className="rounded-full border border-white/10 bg-slate-800/80 px-4 py-2 text-xs font-semibold text-white outline-none transition hover:border-sky-300/60 focus:border-sky-300 focus:ring-2 focus:ring-sky-400/40"
+                >
+                  <option value="all">Alle Spieltage</option>
+                  {matchdayOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {liveFeedMatches.length === 0 ? (
                 <p className="text-sm text-slate-300/70">
-                  {selectedTableId ? t('live_feed_empty') : t('live_feed_select')}
+                  {selectedTableId
+                    ? matchdayFilter === 'all'
+                      ? t('live_feed_empty')
+                      : 'Keine Spiele für diesen Spieltag gefunden.'
+                    : t('live_feed_select')}
                 </p>
               ) : (
-                latestMatches.map((match) => {
+                liveFeedMatches.map((match) => {
                   const isGsh = match.homeTeam === 'Gut Schluck Hauset' || match.awayTeam === 'Gut Schluck Hauset'
                   return (
                     <div
