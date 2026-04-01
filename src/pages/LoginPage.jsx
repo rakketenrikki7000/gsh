@@ -89,7 +89,7 @@ const LoginPage = ({ user }) => {
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? t('login_loading') : t('login_button')}
           </button>

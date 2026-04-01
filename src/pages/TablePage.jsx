@@ -291,7 +291,7 @@ const TablePage = ({
                   <button
                     type="submit"
                     disabled={creatingTable}
-                    className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {creatingTable ? t('admin_creating') : t('admin_create_table')}
                   </button>
@@ -395,7 +395,7 @@ const TablePage = ({
                   <button
                     type="submit"
                     disabled={saving}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-400/50 bg-primary px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {saving ? t('workflow_saving') : t('workflow_save')}
                   </button>
@@ -485,7 +485,7 @@ const TablePage = ({
                 <button
                   type="submit"
                   disabled={savingNote}
-                  className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {savingNote ? t('notes_saving') : editingNoteId ? t('notes_update') : t('notes_save')}
                 </button>
@@ -493,7 +493,7 @@ const TablePage = ({
                   <button
                     type="button"
                     onClick={resetNoteForm}
-                    className="ml-2 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-white/25 hover:bg-white/10"
+                    className="ml-2 inline-flex items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-700"
                   >
                     {t('notes_cancel')}
                   </button>
@@ -525,7 +525,7 @@ const TablePage = ({
                           <button
                             type="button"
                             onClick={() => handleEditNote(note)}
-                            className="rounded-full border border-slate-300/70 bg-white/95 px-3 py-1 text-[11px] font-semibold text-slate-900 shadow-sm transition hover:border-sky-400/60 hover:bg-sky-50"
+                            className="rounded-full border border-emerald-400/50 bg-primary px-3 py-1 text-[11px] font-semibold text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-700"
                           >
                             {t('notes_edit')}
                           </button>

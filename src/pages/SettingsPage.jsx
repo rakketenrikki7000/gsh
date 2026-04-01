@@ -56,8 +56,8 @@ const SettingsPage = ({ user, onProfileSaved, theme, onThemeChange }) => {
                   onClick={() => onThemeChange?.(opt.value)}
                   className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${
                     theme === opt.value
-                      ? 'border-emerald-400/70 bg-emerald-500/20 text-emerald-50 shadow shadow-emerald-500/30'
-                      : 'border-white/10 bg-white/5 text-slate-200 hover:border-emerald-300/50 hover:text-emerald-50'
+                      ? 'border-emerald-400/70 bg-primary text-slate-900 shadow shadow-emerald-500/30'
+                      : 'border-emerald-400/50 bg-primary text-slate-900 shadow shadow-emerald-500/20 hover:bg-emerald-700'
                   }`}
                 >
                   {opt.label}
@@ -90,7 +90,7 @@ const SettingsPage = ({ user, onProfileSaved, theme, onThemeChange }) => {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-orange-400 px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center rounded-full border border-emerald-400/50 bg-primary px-5 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? 'Speichern...' : 'Speichern'}
           </button>

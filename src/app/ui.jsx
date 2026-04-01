@@ -291,6 +291,7 @@ const Footer = ({ user }) => {
     {
       href: 'https://www.facebook.com',
       label: 'Facebook',
+      className: 'border-[#1877F2] bg-[#1877F2] text-white hover:border-[#1877F2] hover:bg-[#1877F2] hover:text-white',
       icon: (
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true">
           <path d="M13.5 21v-7h2.4l.4-3h-2.8V9.1c0-.9.3-1.6 1.6-1.6H16V4.8c-.2 0-.9-.1-1.8-.1c-2.7 0-4.2 1.6-4.2 4.5V11H7.5v3H10v7h3.5Z" />
@@ -300,6 +301,10 @@ const Footer = ({ user }) => {
     {
       href: 'https://www.instagram.com',
       label: 'Instagram',
+      className: 'border-transparent text-white hover:border-transparent hover:text-white',
+      style: {
+        background: 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)',
+      },
       icon: (
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
           <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
@@ -340,7 +345,7 @@ const Footer = ({ user }) => {
             </Link>
           ))}
           <span className="text-slate-500">|</span>
-          <span className="text-slate-400">Kirchstrasse 97, 4730 Raeren</span>
+          <span className="text-slate-400">Kirchstrasse 97, 4730 Hauset</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -351,7 +356,8 @@ const Footer = ({ user }) => {
               target="_blank"
               rel="noreferrer"
               aria-label={item.label}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:border-sky-400/60 hover:bg-white/15 hover:text-sky-100"
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${item.className}`}
+              style={item.style}
             >
               {item.icon}
             </a>

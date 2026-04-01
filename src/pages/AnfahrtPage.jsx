@@ -16,11 +16,11 @@ const AnfahrtPage = () => (
             <p className="text-sm text-slate-200/90">
               Kirchstrasse 97
               <br />
-              4730 Raeren
+              4730 Hauset
             </p>
             <p className="text-xs text-slate-400">Parkplaetze direkt vor dem Platz - Buslinie 722 bis "Hauset Dorf"</p>
             <a
-              href="https://maps.google.com/?q=Kirchstra%C3%9Fe+97,+4730+Raeren"
+              href="https://maps.google.com/?q=Kirchstra%C3%9Fe+97,+4730+Hauset"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-emerald-500/30 transition hover:-translate-y-0.5 hover:bg-emerald-700"
@@ -47,8 +47,8 @@ const AnfahrtPage = () => (
         <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70 shadow-soft">
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-transparent to-slate-950/30 pointer-events-none" />
           <iframe
-            title="Karte Kirchstrasse 97, Raeren"
-            src="https://maps.google.com/maps?q=Kirchstra%C3%9Fe%2097%2C%204730%20Raeren&z=16&output=embed"
+            title="Karte Kirchstrasse 97, Hauset"
+            src="https://maps.google.com/maps?q=Kirchstra%C3%9Fe%2097%2C%204730%20Hauset&z=16&output=embed"
             width="100%"
             height="320"
             allowFullScreen=""

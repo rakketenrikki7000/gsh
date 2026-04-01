@@ -16,7 +16,7 @@
 
 const STADIUM_OPTIONS = [
   'Stadionstrasse 10, 4721 Kelmis, Belgien (Untergrund: Kunstrasen)',
-  'Kirchstrasse 97, 4730 Raeren, Belgien (Untergrund: Rasen)',
+  'Kirchstrasse 97, 4730 Hauset, Belgien (Untergrund: Rasen)',
   'Schoenefelderweg 240, 4700 Eupen, Belgien (Untergrund: Rasen)',
   'Lichtenbuscher Strasse 155, 4731 Raeren, Belgien (Untergrund: Rasen)',
   'Talstrasse 43, 4701 Eupen, Belgien (Untergrund: Rasen)',

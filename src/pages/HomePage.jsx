@@ -24,13 +24,13 @@ const HomePage = ({ user }) => {
           <div className="flex flex-wrap gap-3">
             <Link
               to={tableHref}
-              className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-700"
+             className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-700"
             >
               Zur Tabelle
             </Link>
             <Link
               to="/news"
-              className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-700"
+             className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-700"
             >
               News & Updates
             </Link>
@@ -61,7 +61,7 @@ const HomePage = ({ user }) => {
         <div className="mt-5">
           <Link
             to="/ueber-uns"
-            className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white shadow-inner transition hover:-translate-y-0.5 hover:border-sky-400/60 hover:bg-white/15 hover:text-sky-100 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)]"
+             className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white shadow-inner transition hover:-translate-y-0.5 hover:border-sky-400/60 hover:bg-white/15 hover:text-sky-100 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)]"
           >
             Mehr ueber den Verein
           </Link>
@@ -85,14 +85,14 @@ const HomePage = ({ user }) => {
           <p>
             Kirchstrasse 97
             <br />
-            4730 Raeren
+            4730 Hauset
           </p>
           <p className="text-slate-300/80">Parkplaetze direkt vor Ort, Buslinie 722 bis Hauset Dorf.</p>
         </div>
         <div className="mt-4">
           <Link
             to="/anfahrt"
-            className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white shadow-inner transition hover:-translate-y-0.5 hover:border-sky-400/60 hover:bg-white/15 hover:text-sky-100 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)]"
+             className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-white shadow-inner transition hover:-translate-y-0.5 hover:border-sky-400/60 hover:bg-white/15 hover:text-sky-100 hover:shadow-[0_0_24px_rgba(56,189,248,0.35)]"
           >
             Anfahrt ansehen
           </Link>
