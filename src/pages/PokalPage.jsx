@@ -1066,7 +1066,7 @@ const PokalPage = ({ isAdmin }) => {
                                     lang="de-DE"
                                     value={toIsoDateValue(draftMeta.date || '')}
                                     onChange={(event) => updateMatchMetaDraft(match.id, 'date', event.target.value)}
-                                    className="h-11 w-full rounded-xl border border-white/10 bg-slate-800/80 px-3 py-2 text-sm font-semibold text-white outline-none transition focus:border-sky-300 focus:ring-2 focus:ring-sky-400/40"
+                                    className="mobile-date-input h-11 w-full rounded-xl border border-white/10 bg-slate-800/80 px-3 py-2 text-sm font-semibold text-white outline-none transition focus:border-sky-300 focus:ring-2 focus:ring-sky-400/40"
                                   />
                                   <div className="grid grid-cols-2 gap-2">
                                     <select
