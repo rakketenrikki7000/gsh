@@ -7,6 +7,38 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.env.template
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.csr
+*.der
+*.jks
+*.keystore
+serviceAccount*.json
+firebase-admin*.json
+google-credentials*.json
+credentials*.json
+secrets*.json
+secret*.json
+
+# Local caches and reports
+.cache
+.parcel-cache
+.turbo
+.vercel
+.firebase
+coverage
+*.tsbuildinfo
+
 node_modules
 dist
 dist-ssr
